@@ -21,7 +21,7 @@ paths:
               properties:
                 action:
                   type: string
-                  enum: [health, dashboard, events, log-event, update-event, reports, report, hypotheses, run-status, version]
+                  enum: [health, dashboard, events, log-event, update-event, reports, report, hypotheses, log-analysis, run-status, version]
                 integrationToken:
                   type: string
                   description: Private dedicated Gut Genie integration credential.
@@ -116,6 +116,35 @@ paths:
                     notes:
                       type: string
                     data_quality:
+                      type: string
+                    analysis_id:
+                      type: string
+                    target_date:
+                      type: string
+                      description: Target local date in YYYY-MM-DD format.
+                    hypothesis:
+                      type: string
+                    factor_type:
+                      type: string
+                    candidate_exposure:
+                      type: string
+                    supporting_evidence:
+                      type: string
+                    evidence_against:
+                      type: string
+                    confounders:
+                      type: string
+                    observations_count:
+                      type: integer
+                    confidence:
+                      type: string
+                    confidence_rationale:
+                      type: string
+                    next_test:
+                      type: string
+                    status:
+                      type: string
+                    supersedes_analysis_id:
                       type: string
                     source_message_id:
                       type: string
