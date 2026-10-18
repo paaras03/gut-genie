@@ -6,7 +6,7 @@ info:
     Private API for logging digestive events and reading the Gut Genie dashboard.
     Requests are sent to the deployed Google Apps Script Web App URL ending in /exec.
 servers:
-  - url: https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec
+  - url: https://script.google.com/macros/s/AKfycbyyeJVUmEHPsa32tRxS9MOjiqwG-s0EhCXLmoHStDdUVktktyeUInipMpY8ZQHOJso1/exec
 paths:
   /:
     post:
