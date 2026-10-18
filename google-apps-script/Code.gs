@@ -282,7 +282,7 @@ function ggLogEvent_(ss, body) {
   if (!sheet) throw new Error('Missing tab "' + sheetName + '". Run inspect-schema, then setup-schema if appropriate.');
   const headers = ggHeaders_(sheet);
   if (!headers.length) throw new Error('Tab "' + sheetName + '" has no header row.');
-  const data = body.data || {};
+  const data = ggPayloadData_(body, headers);
   const occurred = ggEventTime_(type, body.occurred_at || data.occurred_at || data.started_at || data.sleep_start);
   const localDate = String(data.local_date || (occurred ? Utilities.formatDate(occurred, GG_TIMEZONE, "yyyy-MM-dd") : ggToday_()));
   const sourceId = String(body.idempotency_key || body.source_message_id || data.source_message_id || "").trim();
@@ -337,7 +337,7 @@ function ggUpdateEvent_(ss, body) {
   if (idCol < 0) throw new Error("record_id column missing.");
   const rowIndex = values.findIndex(function(row, i) { return i > 0 && String(row[idCol]) === recordId; });
   if (rowIndex < 1) throw new Error("Record not found.");
-  const patch = body.data || {};
+  const patch = ggPayloadData_(body, headers);
   const blocked = {record_id:true, captured_at:true, source_message_id:true};
   const allowed = {};
   Object.keys(patch).forEach(function(key) {
@@ -349,6 +349,27 @@ function ggUpdateEvent_(ss, body) {
     sheet.getRange(rowIndex + 1, headers.indexOf(key) + 1).setValue(value);
   });
   return ggJson_({success: true, record_id: recordId, updated_fields: Object.keys(allowed)});
+}
+
+function ggPayloadData_(body, headers) {
+  // Prefer the documented nested data object. If a GPT Action sends event
+  // fields at the top level instead, accept only keys matching this sheet's
+  // headers so action/control parameters cannot become event columns.
+  if (body.data && typeof body.data === "object" && !Array.isArray(body.data) &&
+      Object.keys(body.data).length) {
+    return body.data;
+  }
+  const reserved = {
+    action:true, integrationToken:true, event_type:true, data:true,
+    idempotency_key:true, source_message_id:true, record_id:true,
+    report_id:true, date:true, from_date:true, to_date:true,
+    limit:true, status:true
+  };
+  const result = {};
+  Object.keys(body).forEach(function(key) {
+    if (!reserved[key] && headers.indexOf(key) >= 0) result[key] = body[key];
+  });
+  return result;
 }
 
 function ggReports_(ss, body) {
