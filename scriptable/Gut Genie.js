@@ -36,6 +36,11 @@ function localDateISO() {
 }
 
 async function main() {
+  const startup = new Alert();
+  startup.title = "Gut Genie startup check";
+  startup.message = "Checkpoint 1: Scriptable JavaScript started.";
+  startup.addAction("Continue");
+  await startup.present();
   try {
     const web = new WebView();
     // Show the dashboard immediately; do not block WebView startup on the network.
