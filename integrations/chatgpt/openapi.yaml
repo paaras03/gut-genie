@@ -1,0 +1,99 @@
+openapi: 3.1.0
+info:
+  title: Gut Genie API
+  version: 0.1.1
+  description: Private API for logging digestive events and reading Gut Genie records.
+servers:
+  - url: https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec
+paths:
+  /:
+    post:
+      operationId: gutGenieRequest
+      summary: Log or retrieve Gut Genie data
+      description: Send one supported API action in a JSON body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, integrationToken]
+              properties:
+                action:
+                  type: string
+                  enum: [health, dashboard, events, log-event, reports, report, hypotheses, run-status, version]
+                integrationToken:
+                  type: string
+                  description: Private dedicated Gut Genie integration credential.
+                date:
+                  type: string
+                  description: Date in YYYY-MM-DD format.
+                event_type:
+                  type: string
+                  enum: [food, symptom, sleep, exercise, bowel]
+                occurred_at:
+                  type: string
+                  description: ISO 8601 timestamp when known.
+                from_date:
+                  type: string
+                to_date:
+                  type: string
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 500
+                idempotency_key:
+                  type: string
+                source_message_id:
+                  type: string
+                record_id:
+                  type: string
+                report_id:
+                  type: string
+                status:
+                  type: string
+                data:
+                  type: object
+                  description: Event fields matching the selected event sheet columns.
+                  additionalProperties: true
+      responses:
+        '200':
+          description: API result. Check success and verify writes by reading the event back.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                  code:
+                    type: string
+                  record_id:
+                    type: string
+                  duplicate:
+                    type: boolean
+                  event_type:
+                    type: string
+                  local_date:
+                    type: string
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  counts:
+                    type: object
+                    additionalProperties: true
+                  reports:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  hypotheses:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                additionalProperties: true
