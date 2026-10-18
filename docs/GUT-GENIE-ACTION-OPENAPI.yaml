@@ -1,36 +1,64 @@
 openapi: 3.1.0
 info:
   title: Gut Genie API
-  version: 0.1.0
-  description: >
-    Private API for logging digestive events and reading the Gut Genie dashboard.
-    Requests are sent to the deployed Google Apps Script Web App URL ending in /exec.
+  version: 0.1.1
+  description: Private API for logging digestive events and reading Gut Genie records.
 servers:
-  - url: https://script.google.com/macros/s/AKfycbyyeJVUmEHPsa32tRxS9MOjiqwG-s0EhCXLmoHStDdUVktktyeUInipMpY8ZQHOJso1/exec
+  - url: https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec
 paths:
   /:
     post:
       operationId: gutGenieRequest
-      summary: Submit a Gut Genie API action
-      description: >
-        All operations use POST JSON. Include the action, token, and operation-specific
-        fields in the request body. Keep this GPT private. Do not publish the token or
-        this Action configuration.
+      summary: Log or retrieve Gut Genie data
+      description: Send one supported API action in a JSON body.
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/LogEventRequest'
-                - $ref: '#/components/schemas/DashboardRequest'
-                - $ref: '#/components/schemas/EventsRequest'
-                - $ref: '#/components/schemas/ReportsRequest'
-                - $ref: '#/components/schemas/HypothesesRequest'
-                - $ref: '#/components/schemas/HealthRequest'
+              type: object
+              required: [action, integrationToken]
+              properties:
+                action:
+                  type: string
+                  enum: [health, dashboard, events, log-event, reports, report, hypotheses, run-status, version]
+                integrationToken:
+                  type: string
+                  description: Private dedicated Gut Genie integration credential.
+                date:
+                  type: string
+                  description: Date in YYYY-MM-DD format.
+                event_type:
+                  type: string
+                  enum: [food, symptom, sleep, exercise, bowel]
+                occurred_at:
+                  type: string
+                  description: ISO 8601 timestamp when known.
+                from_date:
+                  type: string
+                to_date:
+                  type: string
+                limit:
+                  type: integer
+                  minimum: 1
+                  maximum: 500
+                idempotency_key:
+                  type: string
+                source_message_id:
+                  type: string
+                record_id:
+                  type: string
+                report_id:
+                  type: string
+                status:
+                  type: string
+                data:
+                  type: object
+                  description: Event fields matching the selected event sheet columns.
+                  additionalProperties: true
       responses:
         '200':
-          description: JSON result from the Gut Genie Apps Script API.
+          description: API result. Check success and verify writes by reading the event back.
           content:
             application/json:
               schema:
@@ -39,6 +67,8 @@ paths:
                   success:
                     type: boolean
                   error:
+                    type: string
+                  code:
                     type: string
                   record_id:
                     type: string
@@ -52,6 +82,7 @@ paths:
                     type: array
                     items:
                       type: object
+                      additionalProperties: true
                   counts:
                     type: object
                     additionalProperties: true
@@ -59,110 +90,10 @@ paths:
                     type: array
                     items:
                       type: object
+                      additionalProperties: true
                   hypotheses:
                     type: array
                     items:
                       type: object
-components:
-  schemas:
-    BaseRequest:
-      type: object
-      required: [action, integrationToken]
-      properties:
-        action:
-          type: string
-        integrationToken:
-          type: string
-          description: Dedicated restricted credential stored only in the private GPT instructions. Never include it in user-visible messages.
-    LogEventRequest:
-      allOf:
-        - $ref: '#/components/schemas/BaseRequest'
-        - type: object
-          required: [event_type, data]
-          properties:
-            action:
-              const: log-event
-            event_type:
-              type: string
-              enum: [food, symptom, sleep, exercise, bowel]
-            occurred_at:
-              type: string
-              description: ISO 8601 timestamp with timezone when known.
-            idempotency_key:
-              type: string
-              description: Stable unique key to prevent duplicate writes on retries.
-            data:
-              type: object
-              description: >
-                Fields matching the columns in the selected event sheet.
-                For food use meal_type, description, items_json, fodmap_groups,
-                estimated_load, notes. For symptom use symptoms, fullness_score,
-                gas_level, gas_smell, acidity_score, pain_score, bowel_urgency,
-                onset_type, description, notes. For sleep use sleep_start, wake_at,
-                duration_minutes, quality_score, notes. For exercise use started_at,
-                ended_at, activity_type, duration_minutes, intensity, notes.
-                For bowel use stool_form, urgency, straining, incomplete_emptying,
-                description.
-              additionalProperties: true
-    DashboardRequest:
-      allOf:
-        - $ref: '#/components/schemas/BaseRequest'
-        - type: object
-          required: [date]
-          properties:
-            action:
-              const: dashboard
-            date:
-              type: string
-              format: date
-    EventsRequest:
-      allOf:
-        - $ref: '#/components/schemas/BaseRequest'
-        - type: object
-          properties:
-            action:
-              const: events
-            event_type:
-              type: string
-              enum: [food, symptom, sleep, exercise, bowel]
-            from_date:
-              type: string
-              format: date
-            to_date:
-              type: string
-              format: date
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 500
-    ReportsRequest:
-      allOf:
-        - $ref: '#/components/schemas/BaseRequest'
-        - type: object
-          properties:
-            action:
-              const: reports
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 100
-    HypothesesRequest:
-      allOf:
-        - $ref: '#/components/schemas/BaseRequest'
-        - type: object
-          properties:
-            action:
-              const: hypotheses
-            status:
-              type: string
-            limit:
-              type: integer
-              minimum: 1
-              maximum: 200
-    HealthRequest:
-      allOf:
-        - $ref: '#/components/schemas/BaseRequest'
-        - type: object
-          properties:
-            action:
-              const: health
+                      additionalProperties: true
+                additionalProperties: true
