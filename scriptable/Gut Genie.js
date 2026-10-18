@@ -38,7 +38,8 @@ function localDateISO() {
 async function main() {
   try {
     const web = new WebView();
-    const initial = await api("dashboard", {});
+    // Show the dashboard immediately; do not block WebView startup on the network.
+    const initial = { success: true, loading: true, date: localDateISO(), events: [], counts: {} };
     web.shouldAllowRequest = function(request) {
     if (!request.url.startsWith("gutgenie://")) {
       if (/^https?:\/\//i.test(request.url)) { Safari.open(request.url); return false; }
@@ -96,7 +97,7 @@ function renderToday(a){
  var html='<div class="row"><div><h1>Gut Genie</h1><div class="sub">Your digestive patterns, over time</div></div><button class="btn" onclick="refresh()">↻</button></div>';
  html+='<div class="metricGrid"><div class="metric"><strong>'+Number(counts.food||0)+'</strong><span class="muted">Meals & drinks</span></div><div class="metric"><strong>'+Number(counts.symptom||0)+'</strong><span class="muted">Symptom logs</span></div><div class="metric"><strong>'+Number(counts.sleep||0)+'</strong><span class="muted">Sleep records</span></div><div class="metric"><strong>'+Number(counts.exercise||0)+'</strong><span class="muted">Exercise records</span></div></div>';
  html+='<div class="section"><div class="row"><h2>Today’s timeline</h2><span class="muted">'+esc(dashboard.date||"")+'</span></div>';
- if(!events.length)html+='<div class="card empty">No events logged for this day yet.</div>';
+ if(dashboard.loading)html+='<div class="card empty">Loading today’s records…</div>';else if(!events.length)html+='<div class="card empty">No events logged for this day yet.</div>';
  events.forEach(function(e){var t=e.occurred_at||e.started_at||e.sleep_start||e.wake_at;var title=e.description||e.meal_type||e.activity_type||e.event_type||"Event";if(e.event_type==="symptom")title=e.description||((e.symptoms||"Symptoms")+((e.gas_level)?" · Gas "+e.gas_level:""));if(e.event_type==="food")title=e.description||"Meal";if(e.event_type==="sleep")title="Sleep";html+='<div class="event"><div class="row"><b>'+esc(title)+'</b><span class="muted">'+esc(dateLabel(t))+'</span></div><p>'+esc(e.notes||e.items_json||e.intensity||"")+'</p><span class="pill">'+esc(e.event_type)+'</span></div>';});
  html+='</div><div class="section"><h2>Daily assessment</h2><div class="card">'+(report?'<div class="row"><span class="pill">'+esc(report.status||"saved")+'</span><span class="muted">Version '+esc(report.version||"1")+'</span></div><p>'+esc(report.day_summary||"Open the report for details.")+'</p><p class="muted">'+esc(report.next_experiment||"No next experiment recorded.")+'</p>':'<div class="muted">No daily report available yet. The analysis engine is not connected in this prototype.</div>')+'</div></div>';
  a.innerHTML=html;
@@ -104,6 +105,7 @@ function renderToday(a){
 function renderHistory(a){var html='<h1>History</h1><div class="sub">Previous daily assessments</div>';if(!reports){html+='<div class="card"><div class="muted">Load reports from your spreadsheet.</div><button class="btn" onclick="location.href=\'gutgenie://?action=history\'">Load history</button></div>';a.innerHTML=html;return;}var list=reports.reports||[];if(!list.length)html+='<div class="card empty">No reports saved yet.</div>';list.forEach(function(r){html+='<div class="card"><div class="row"><b>'+esc(r.local_date||"Unknown date")+'</b><span class="pill">'+esc(r.status||"")+'</span></div><p>'+esc(r.day_summary||"No summary available.")+'</p><div class="muted">Version '+esc(r.version||"1")+'</div></div>';});a.innerHTML=html;}
 function renderPatterns(a){var html='<h1>Patterns</h1><div class="sub">Hypotheses, not diagnoses</div>';if(!hypotheses){html+='<div class="card"><div class="muted">Load current hypotheses and their supporting/contradictory evidence.</div><button class="btn" onclick="location.href=\'gutgenie://?action=patterns\'">Load patterns</button></div>';a.innerHTML=html;return;}var list=hypotheses.hypotheses||[];if(!list.length)html+='<div class="card empty">No hypotheses recorded yet.</div>';list.forEach(function(h){html+='<div class="card"><div class="row"><b>'+esc(h.hypothesis||"Possible association")+'</b><span class="pill">'+esc(h.confidence||"Unknown")+'</span></div><p>'+esc(h.confidence_rationale||"")+'</p><div class="muted">For: '+esc(h.supporting_evidence||"Not recorded")+'</div><div class="muted" style="margin-top:6px">Against: '+esc(h.evidence_against||"Not recorded")+'</div><p class="muted">Next test: '+esc(h.next_test||"Not recorded")+'</p></div>';});a.innerHTML=html;}
 window.nativeDashboard=function(payload){if(payload.result)dashboard=payload.result;else dashboard={success:false,error:payload.error};render();};
+window.addEventListener("load",function(){setTimeout(function(){location.href="gutgenie://?action=refresh";},250);});
 window.nativeHistory=function(payload){if(payload.result)reports=payload.result;else reports={success:false,error:payload.error,reports:[]};render();};
 window.nativePatterns=function(payload){if(payload.result)hypotheses=payload.result;else hypotheses={success:false,error:payload.error,hypotheses:[]};render();};
 render();
