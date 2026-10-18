@@ -273,13 +273,16 @@ function ggLogEvent_(ss, body) {
   const localDate = String(data.local_date || (occurred ? Utilities.formatDate(occurred, GG_TIMEZONE, "yyyy-MM-dd") : ggToday_()));
   const sourceId = String(body.idempotency_key || body.source_message_id || data.source_message_id || "").trim();
 
-  if (sourceId) {
-    const duplicate = ggFindBySourceId_(sheet, headers, sourceId);
-    if (duplicate) return ggJson_({
-      success: true, duplicate: true, record_id: duplicate.record_id,
-      event_type: type, message: "Idempotent retry; existing record returned."
-    });
-  }
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    if (sourceId) {
+      const duplicate = ggFindBySourceId_(sheet, headers, sourceId);
+      if (duplicate) return ggJson_({
+        success: true, duplicate: true, record_id: duplicate.record_id,
+        event_type: type, message: "Idempotent retry; existing record returned."
+      });
+    }
 
   const recordId = Utilities.getUuid();
   const record = Object.assign({}, data);
@@ -300,6 +303,9 @@ function ggLogEvent_(ss, body) {
     success: true, record_id: recordId, event_type: type,
     stored_at: record.captured_at, local_date: localDate, duplicate: false
   });
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function ggUpdateEvent_(ss, body) {
@@ -409,13 +415,7 @@ function ggAppendByHeaders_(sheet, headers, record) {
   const row = headers.map(function(header) {
     return record[header] === undefined || record[header] === null ? "" : record[header];
   });
-  const lock = LockService.getScriptLock();
-  lock.waitLock(10000);
-  try {
-    sheet.appendRow(row);
-  } finally {
-    lock.releaseLock();
-  }
+  sheet.appendRow(row);
 }
 
 function ggFindBySourceId_(sheet, headers, sourceId) {
