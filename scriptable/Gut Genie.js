@@ -85,6 +85,16 @@ button{font:inherit;cursor:pointer}.btn{border:0;border-radius:11px;padding:10px
 <div class="nav"><button id="navToday" class="on" onclick="showPage('today')">◷<br>Today</button><button id="navHistory" onclick="showPage('history')">▤<br>History</button><button id="navPatterns" onclick="showPage('patterns')">⌁<br>Patterns</button></div>
 <script>
 var dashboard = ${safeInitial}; var reports = null; var hypotheses = null; var page = "today";
+window.onerror=function(message,source,line,column,error){
+  var app=document.getElementById("app");
+  if(app) app.innerHTML='<h1>Gut Genie diagnostic</h1><div class="error"><b>JavaScript error</b><p>'+String(message||"Unknown error").replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</p><p>Line: '+String(line||"?")+', column: '+String(column||"?")+'</p></div>';
+  return false;
+};
+window.onunhandledrejection=function(event){
+  var app=document.getElementById("app");
+  var reason=event&&event.reason;
+  if(app) app.innerHTML='<h1>Gut Genie diagnostic</h1><div class="error"><b>Unhandled async error</b><p>'+String(reason&&reason.message||reason||"Unknown error").replace(/&/g,"&amp;").replace(/</g,"&lt;")+'</p></div>';
+};
 function esc(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
 function dateLabel(v){if(!v)return "";var d=new Date(v);return isNaN(d)?"":d.toLocaleTimeString([], {hour:"numeric",minute:"2-digit"});}
 function showPage(p){page=p;document.querySelectorAll(".nav button").forEach(function(b){b.classList.remove("on")});document.getElementById(p==="today"?"navToday":p==="history"?"navHistory":"navPatterns").classList.add("on");render();}
