@@ -126,7 +126,7 @@ function ggAuthorize_(body, action) {
   const expectedActionToken = props.getProperty("CHATGPT_ACTION_TOKEN");
   const actionTokenAllowed = [
     "health", "dashboard", "events", "log-event", "reports", "report",
-    "hypotheses", "run-status", "version"
+    "hypotheses", "run-status", "version", "update-event"
   ];
   if (actionToken && expectedActionToken && actionToken === expectedActionToken) {
     if (actionTokenAllowed.indexOf(action) < 0) {
