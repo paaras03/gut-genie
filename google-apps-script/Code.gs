@@ -428,7 +428,14 @@ function ggReadTable_(ss, sheetName) {
   }).map(function(row) {
     const out = {};
     headers.forEach(function(h, i) {
-      if (h) out[h] = ggSerializeCell_(row[i]);
+      if (!h) return;
+      // Date-formatted cells must remain local calendar dates. Converting a
+      // local_date Date object to UTC ISO first can shift it to the previous day.
+      if (h === "local_date" && row[i] instanceof Date) {
+        out[h] = Utilities.formatDate(row[i], GG_TIMEZONE, "yyyy-MM-dd");
+      } else {
+        out[h] = ggSerializeCell_(row[i]);
+      }
     });
     return out;
   });
