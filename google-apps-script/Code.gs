@@ -406,7 +406,7 @@ function ggLogAnalysis_(ss, body) {
   const hypothesis = String(payload.hypothesis || "").trim();
   if (!hypothesis) throw new Error("data.hypothesis is required.");
   const targetDate = String(payload.target_date || body.date || ggToday_()).slice(0, 10);
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(targetDate)) throw new Error("target_date must use YYYY-MM-DD.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(targetDate)) throw new Error("target_date must use YYYY-MM-DD.");
   const now = Utilities.formatDate(new Date(), GG_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss");
   const row = {
     analysis_id: "ANALYSIS-" + Utilities.getUuid(),
