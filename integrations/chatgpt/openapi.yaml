@@ -4,7 +4,7 @@ info:
   version: 0.1.1
   description: Private API for logging digestive events and reading Gut Genie records.
 servers:
-  - url: https://script.google.com/macros/s/REPLACE_WITH_DEPLOYMENT_ID/exec
+  - url: https://script.google.com/macros/s/AKfycbxBsK1rLBU1RHuUF4IlVxw8gButphw6zTmwKdeckC_E4gGSx9cbGsOsZXW3D-znOlW--Q/exec
 paths:
   /:
     post:
@@ -21,7 +21,7 @@ paths:
               properties:
                 action:
                   type: string
-                  enum: [health, dashboard, events, log-event, reports, report, hypotheses, run-status, version]
+                  enum: [health, dashboard, events, log-event, update-event, reports, report, hypotheses, run-status, version]
                 integrationToken:
                   type: string
                   description: Private dedicated Gut Genie integration credential.
