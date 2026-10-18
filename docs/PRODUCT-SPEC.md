@@ -240,22 +240,24 @@ Optional later tab: `Food Dictionary` for aliases, likely FODMAP groups, portion
 
 ## 6. API contract
 
-Follow Recipe Tracker's action-based API pattern. Use GET for reads and POST JSON for writes.
+Follow Recipe Tracker's action-based JSON API pattern, with one security improvement: all sensitive reads and writes use POST JSON so the shared API token is not placed in the URL. The public GET endpoint returns only a generic service/version message.
 
 | Action | Method | Purpose |
 |---|---|---|
-| `version` | GET | API/build and schema version |
-| `health` | GET | Sheet access, schema and trigger status, no secrets |
-| `dashboard` | GET | Today's overview and latest report state |
-| `events` | GET | Read events by date range/type with pagination |
-| `report` | GET | Fetch one report by ID/date |
-| `reports` | GET | Historical reports |
-| `hypotheses` | GET | Analysis records, optionally filtered by status |
+| `version` | GET or POST | Public build version via GET; authenticated version details via POST |
+| `health` | POST | Sheet access, schema and trigger status, no secrets |
+| `inspect-schema` | POST | Read existing tab names, row counts and headers without changing data |
+| `setup-schema` | POST | Explicitly create missing tabs / initialize empty tabs only |
+| `dashboard` | POST | Today's overview and latest report state |
+| `events` | POST | Read events by date range/type with pagination |
+| `report` | POST | Fetch one report by ID/date |
+| `reports` | POST | Historical reports |
+| `hypotheses` | POST | Analysis records, optionally filtered by status |
 | `log-event` | POST | Validate and append event |
 | `update-event` | POST | Correct permitted fields |
-| `analyse-day` | POST | Run/re-run analysis for a date |
-| `run-status` | GET | Latest scheduled/manual run status |
-| `export` | GET | Optional later export |
+| `analyse-day` | POST | Reserved; analysis engine not implemented yet |
+| `run-status` | POST | Latest scheduled/manual run status |
+| `export` | POST | Optional later export |
 
 ### Request example
 
@@ -460,7 +462,7 @@ Add 7/14/30-day trends, hypothesis status transitions, data-quality indicators a
 
 These remain open decisions; the spec does not imply they are resolved.
 
-1. **Spreadsheet:** the user supplied the spreadsheet linked above; inspect its existing tabs and preserve data before schema changes.
+1. **Spreadsheet:** the user supplied the spreadsheet linked above. The first API operation must be inspect-schema; preserve existing data and only run setup-schema after reviewing the returned tab names/headers. The current Apps Script code includes these actions, but they have not been run against the live spreadsheet.
 2. **ChatGPT integration:** determine which secure write path is available in the user's current ChatGPT setup.
 3. **Security:** choose authenticated writes before deploying an endpoint that can store sensitive notes.
 4. **Analysis engine:** keep data selection and evidence storage deterministic; use an LLM for narrative only if an accessible, privacy-appropriate API is deliberately configured.
