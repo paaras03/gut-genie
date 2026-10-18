@@ -153,3 +153,16 @@ The next milestone is complete only when:
 2. One test event can be created and read back with all expected fields.
 3. A dated export of all eight spreadsheet tabs is verified.
 4. Historical backfill can proceed in batches with duplicate checks and reconciliation.
+
+
+## Follow-up — Analysis Log write path (2026-10-19)
+
+Inspection confirmed the missing step: the backend had an `Analysis Log` sheet schema and a `hypotheses` read action, but **no supported write action for that sheet**. The existing `analyse-day` action explicitly returns `ANALYSIS_NOT_IMPLEMENTED`. This explains why a pattern could be saved as a symptom but not written to Analysis Log through the API.
+
+Added to repository source:
+- `google-apps-script/Code.gs`: new `log-analysis` action, allowlisted for the ChatGPT integration token. It writes a row to the existing Analysis Log schema and returns the generated `analysis_id`. It requires `data.hypothesis`, accepts `data.target_date` in YYYY-MM-DD format (or falls back to request date/current date), and defaults confidence to low and status to active.
+- `integrations/chatgpt/openapi.yaml`: documented `log-analysis` and the Analysis Log data fields.
+- Backend commit: `ababb77577af6117a8a301ed26624d601b4a1a42`.
+- OpenAPI commit: `ddcd2e647f3ea442ee6c4f42daf05069f149c992`.
+
+**Not yet verified end-to-end:** GitHub source is updated, but the Apps Script deployment and the saved custom GPT Action schema have not been updated/tested in this step. Do not consider the Analysis Log write operational until the new Apps Script version is deployed, the OpenAPI schema is refreshed in GPT Actions, and a test analysis is written and read back via `hypotheses`. The existing 18 October symptom record was not moved or changed. No new Analysis Log record was created.
