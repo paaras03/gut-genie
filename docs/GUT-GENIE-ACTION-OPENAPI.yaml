@@ -67,13 +67,13 @@ components:
   schemas:
     BaseRequest:
       type: object
-      required: [action, token]
+      required: [action, integrationToken]
       properties:
         action:
           type: string
-        token:
+        integrationToken:
           type: string
-          description: Private API token. Never include it in user-visible messages.
+          description: Dedicated restricted credential stored only in the private GPT instructions. Never include it in user-visible messages.
     LogEventRequest:
       allOf:
         - $ref: '#/components/schemas/BaseRequest'
