@@ -4,7 +4,8 @@
  *
  * Required Script Properties:
  *   SPREADSHEET_ID = 1rIQWc2thSUKHDiFOUtH9fSSkgI5hqisTrblaLVtW8jQ
- *   API_TOKEN = a long random secret, shared only with trusted clients
+ *   API_TOKEN = existing Scriptable/API secret (keep unchanged)
+ *   CHATGPT_ACTION_TOKEN = separate random secret for the private ChatGPT GPT
  *
  * IMPORTANT:
  * - All sensitive API actions use POST JSON so the token is not in the URL.
@@ -79,8 +80,8 @@ function doGet(e) {
 function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
-    ggAuthorize_(body.token);
     const action = String(body.action || "").trim().toLowerCase();
+    ggAuthorize_(body, action);
     const ss = ggSpreadsheet_();
 
     switch (action) {
@@ -119,10 +120,23 @@ function doPost(e) {
   }
 }
 
-function ggAuthorize_(provided) {
-  const expected = PropertiesService.getScriptProperties().getProperty("API_TOKEN");
+function ggAuthorize_(body, action) {
+  const props = PropertiesService.getScriptProperties();
+  const actionToken = String(body.integrationToken || "");
+  const expectedActionToken = props.getProperty("CHATGPT_ACTION_TOKEN");
+  const actionTokenAllowed = [
+    "health", "dashboard", "events", "log-event", "reports", "report",
+    "hypotheses", "run-status", "version"
+  ];
+  if (actionToken && expectedActionToken && actionToken === expectedActionToken) {
+    if (actionTokenAllowed.indexOf(action) < 0) {
+      throw new Error("This integration credential is not allowed to perform that action.");
+    }
+    return;
+  }
+  const expected = props.getProperty("API_TOKEN");
   if (!expected) throw new Error("API_TOKEN Script Property is not configured.");
-  if (!provided || String(provided) !== expected) throw new Error("Unauthorized.");
+  if (!body.token || String(body.token) !== expected) throw new Error("Unauthorized.");
 }
 
 function ggSpreadsheet_() {
