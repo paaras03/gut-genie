@@ -107,6 +107,8 @@ function doPost(e) {
         return ggReport_(ss, body);
       case "hypotheses":
         return ggHypotheses_(ss, body);
+      case "log-analysis":
+        return ggLogAnalysis_(ss, body);
       case "seed-demo-data":
         return ggSeedDemoData_(ss);
       case "run-status":
@@ -128,7 +130,7 @@ function ggAuthorize_(body, action) {
   const expectedActionToken = props.getProperty("CHATGPT_ACTION_TOKEN");
   const actionTokenAllowed = [
     "health", "dashboard", "events", "log-event", "reports", "report",
-    "hypotheses", "run-status", "version", "update-event", "seed-demo-data"
+    "hypotheses", "run-status", "version", "update-event", "seed-demo-data", "log-analysis"
   ];
   if (actionToken && expectedActionToken && actionToken === expectedActionToken) {
     if (actionTokenAllowed.indexOf(action) < 0) {
@@ -392,6 +394,46 @@ function ggReport_(ss, body) {
   });
   reports.sort(function(a, b) { return Number(b.version || 0) - Number(a.version || 0); });
   return ggJson_({success: true, report: reports[0] || null});
+}
+
+function ggLogAnalysis_(ss, body) {
+  const sheet = ss.getSheetByName("Analysis Log");
+  if (!sheet) throw new Error('Missing tab "Analysis Log". Run inspect-schema first.');
+  const headers = ggHeaders_(sheet);
+  if (!headers.length) throw new Error('Tab "Analysis Log" has no header row.');
+  const payload = body.data && typeof body.data === "object" && !Array.isArray(body.data)
+    ? body.data : ggPayloadData_(body, headers);
+  const hypothesis = String(payload.hypothesis || "").trim();
+  if (!hypothesis) throw new Error("data.hypothesis is required.");
+  const targetDate = String(payload.target_date || body.date || ggToday_()).slice(0, 10);
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(targetDate)) throw new Error("target_date must use YYYY-MM-DD.");
+  const now = Utilities.formatDate(new Date(), GG_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss");
+  const row = {
+    analysis_id: "ANALYSIS-" + Utilities.getUuid(),
+    report_id: payload.report_id || "",
+    created_at: now,
+    target_date: targetDate,
+    hypothesis: hypothesis,
+    factor_type: payload.factor_type || "daily_pattern",
+    candidate_exposure: payload.candidate_exposure || "",
+    supporting_evidence: payload.supporting_evidence || "",
+    evidence_against: payload.evidence_against || "",
+    confounders: payload.confounders || "",
+    observations_count: payload.observations_count == null ? 0 : payload.observations_count,
+    confidence: payload.confidence || "low",
+    confidence_rationale: payload.confidence_rationale || "",
+    next_test: payload.next_test || "",
+    status: payload.status || "active",
+    supersedes_analysis_id: payload.supersedes_analysis_id || ""
+  };
+  const values = headers.map(function(header) {
+    const value = row[header];
+    if (value === undefined || value === null) return "";
+    return Array.isArray(value) ? value.join(", ") :
+      (typeof value === "object" ? JSON.stringify(value) : value);
+  });
+  sheet.getRange(sheet.getLastRow() + 1, 1, 1, headers.length).setValues([values]);
+  return ggJson_({success: true, analysis_id: row.analysis_id, target_date: targetDate, status: row.status});
 }
 
 function ggHypotheses_(ss, body) {
