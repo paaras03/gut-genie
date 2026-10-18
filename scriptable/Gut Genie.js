@@ -34,6 +34,7 @@ async function api(action, data) {
 async function main() {
   const web = new WebView();
   const initial = {success:true, loading:true, date:localDateISO(), events:[], counts:{}};
+  let selectedDate = localDateISO();
 
   web.shouldAllowRequest = function(request) {
     const url = request.url || "";
@@ -51,11 +52,14 @@ async function main() {
     } catch (e) { console.error(String(e)); return false; }
 
     if (params.action === "refresh") {
-      api("dashboard", {date:localDateISO()})
+      selectedDate = params.date || selectedDate || localDateISO();
+      api("dashboard", {date:selectedDate})
         .then(result => web.evaluateJavaScript("window.nativeDashboard("+JSON.stringify({result})+")", false))
         .catch(error => web.evaluateJavaScript("window.nativeDashboard("+JSON.stringify({error:String(error)})+")", false));
     } else if (params.action === "history") {
-      api("reports", {limit:30})
+      const end = new Date(); const start = new Date(end); start.setDate(start.getDate()-29);
+      const iso = d => [d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");
+      api("events", {from_date:iso(start),to_date:iso(end),limit:500})
         .then(result => web.evaluateJavaScript("window.nativeHistory("+JSON.stringify({result})+")", false))
         .catch(error => web.evaluateJavaScript("window.nativeHistory("+JSON.stringify({error:String(error)})+")", false));
     } else if (params.action === "patterns") {
@@ -72,6 +76,7 @@ async function main() {
 *{box-sizing:border-box}body{margin:0;padding:22px 15px 100px;background:#faf9f6;color:#17211f;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
 h1{font-size:32px;font-weight:650;letter-spacing:-.7px;margin:0}h2{font-size:20px;font-weight:650;margin:0}.sub{color:#7a817f;font-size:13px;margin:5px 0 18px}
 button{font:inherit;cursor:pointer}.btn{border:0;border-radius:12px;padding:9px 12px;background:#e9eee9;color:#214d3e}
+.dateSwitch{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:18px 0 4px}.dateSwitch button{border:1px solid #e4e3dc;background:#fff;border-radius:11px;padding:8px 12px;color:#214d3e}.dateSwitch input{font:inherit;border:1px solid #e4e3dc;border-radius:11px;background:#fff;padding:8px;min-width:0;max-width:58%}.metric{cursor:pointer;user-select:none}.section{scroll-margin-top:14px}
 .summary{background:#fff;border:1px solid #e9e8e2;border-radius:19px;padding:14px;margin:16px 0 22px}.summaryHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.summaryHead span{font-size:12px;color:#7a817f}
 .metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.metric{border-radius:13px;padding:11px 5px;text-align:center;min-width:0}.metric .ico{font-size:20px;display:block;margin-bottom:5px}.metric strong{font-size:23px;display:block;font-weight:650;line-height:1.1}.metric small{font-size:11px;display:block;margin-top:5px;color:#3e4844}
 .foodTint{background:#e5f3e8}.symptomTint{background:#fde8e5}.bowelTint{background:#eee7fb}.otherTint{background:#e3f0fc}
@@ -90,13 +95,15 @@ function showError(message){var app=document.getElementById("app");app.innerHTML
 window.onerror=function(message,source,line,column){showError(String(message)+" (line "+line+", column "+column+")");return false;};
 window.onunhandledrejection=function(event){showError(event&&event.reason?String(event.reason.message||event.reason):"Unknown asynchronous error");};
 function dateLabel(value){if(!value)return "";var d=new Date(value);return isNaN(d)?"":d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}
-function nativeRequest(action){location.href="gutgenie://?action="+encodeURIComponent(action);}
+function nativeRequest(action, date){location.href="gutgenie://?action="+encodeURIComponent(action)+(date?"&date="+encodeURIComponent(date):"");}
+function shiftDate(delta){var d=new Date((dashboard.date||selectedDate||localDateISO())+"T12:00:00");d.setDate(d.getDate()+delta);selectedDate=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");dashboard={success:true,loading:true,date:selectedDate,events:[],counts:{}};render();nativeRequest("refresh",selectedDate);}
+function chooseDate(value){if(!value)return;selectedDate=value;dashboard={success:true,loading:true,date:value,events:[],counts:{}};render();nativeRequest("refresh",value);}
 function kind(e){return String(e.event_type||e.type||"other").toLowerCase();}
 function category(e){var t=kind(e);if(t==="food"||t==="meal"||t==="drink")return "food";if(t==="symptom")return "symptom";if(t==="bowel"||t==="bowel_movement"||t==="stool")return "bowel";return "other";}
 function entryTitle(e){var t=kind(e);return e.description||e.meal_type||e.activity_type||e.symptoms||(t==="bowel"||t==="bowel_movement"?"Bowel movement":t==="sleep"?"Sleep":t==="exercise"?"Exercise":t==="food"?"Food entry":t==="symptom"?"Symptom":"Other entry");}
 function entryDetail(e){return e.notes||e.items_json||e.intensity||e.consistency||e.food_items||"";}
-function metric(n,label,ico,tint){return '<div class="metric '+tint+'"><span class="ico">'+ico+'</span><strong>'+n+'</strong><small>'+label+'</small></div>';}
-function section(title,icon,type,events){var html='<section class="section '+type+'"><div class="sectionHead"><div class="sectionIcon">'+icon+'</div><div><div class="sectionTitle">'+title+'</div><div class="sectionCount">'+events.length+' '+(events.length===1?'entry':'entries')+' today</div></div></div>';if(!events.length)html+='<div class="empty">Nothing tracked in this section today</div>';events.forEach(function(e){var when=e.occurred_at||e.started_at||e.sleep_start||e.wake_at||e.created_at;html+='<div class="entry"><span class="dot"></span><div class="entryMain"><div class="entryTitle">'+esc(entryTitle(e))+'</div>'+(entryDetail(e)?'<div class="entryMeta">'+esc(entryDetail(e))+'</div>':'')+'</div><span class="entryTime">'+esc(dateLabel(when))+'</span></div>';});return html+'</section>';}
+function metric(n,label,ico,tint,target){return '<button type="button" class="metric '+tint+'" data-scroll="'+target+'"><span class="ico">'+ico+'</span><strong>'+n+'</strong><small>'+label+'</small></button>';}
+function section(title,icon,type,events){var html='<section id="section-'+type+'" class="section '+type+'"><div class="sectionHead"><div class="sectionIcon">'+icon+'</div><div><div class="sectionTitle">'+title+'</div><div class="sectionCount">'+events.length+' '+(events.length===1?'entry':'entries')+' today</div></div></div>';if(!events.length)html+='<div class="empty">Nothing tracked in this section today</div>';events.forEach(function(e){var when=e.occurred_at||e.started_at||e.sleep_start||e.wake_at||e.created_at;html+='<div class="entry"><span class="dot"></span><div class="entryMain"><div class="entryTitle">'+esc(entryTitle(e))+'</div>'+(entryDetail(e)?'<div class="entryMeta">'+esc(entryDetail(e))+'</div>':'')+'</div><span class="entryTime">'+esc(dateLabel(when))+'</span></div>';});return html+'</section>';}
 function render(){document.querySelectorAll(".nav button").forEach(function(b){b.classList.toggle("on",b.dataset.page===page);});var app=document.getElementById("app");if(page==="today")renderToday(app);else if(page==="history")renderHistory(app);else renderPatterns(app);}
 function renderToday(app){
  if(!dashboard||!dashboard.success){app.innerHTML='<h1>Gut Genie</h1><div class="sub">Your daily digestive log</div><div class="error">'+esc(dashboard&&dashboard.error||"Dashboard could not load.")+'</div><button class="btn" data-action="refresh">Retry</button>';return;}
@@ -104,18 +111,20 @@ function renderToday(app){
  events.forEach(function(e){var c=category(e);if(c==="food")foods.push(e);else if(c==="symptom")symptoms.push(e);else if(c==="bowel")bowel.push(e);else other.push(e);});
  var date=dashboard.date||localDateISO();
  var html='<div class="row"><div><h1>Gut Genie</h1><div class="sub" style="margin-bottom:0">Your daily digestive log</div></div><button class="btn" data-action="refresh">↻ Refresh</button></div>';
- html+='<div class="summary"><div class="summaryHead"><b>Today at a glance</b><span>'+esc(date)+'</span></div><div class="metrics">'+metric(foods.length,"Foods","🍴","foodTint")+metric(symptoms.length,"Symptoms","〽️","symptomTint")+metric(bowel.length,"Bowel","🚽","bowelTint")+metric(other.length,"Other","▤","otherTint")+'</div></div>';
+ html+='<div class="dateSwitch"><button data-date-shift="-1" aria-label="Previous day">‹</button><input id="datePicker" type="date" value="'+esc(date)+'" aria-label="Select date"><button data-date-shift="1" aria-label="Next day">›</button></div>';
+ html+='<div class="summary"><div class="summaryHead"><b>Daily summary</b><span>'+esc(date)+'</span></div><div class="metrics">'+metric(foods.length,"Foods","🍴","foodTint","food")+metric(symptoms.length,"Symptoms","〽️","symptomTint","symptom")+metric(bowel.length,"Bowel","🚽","bowelTint","bowel")+metric(other.length,"Other","▤","otherTint","other")+'</div></div>';
  if(dashboard.loading)html+='<div class="card empty">Loading today’s records…</div>';
  html+=section("Foods","🍴","food",foods)+section("Symptoms","〽️","symptom",symptoms)+section("Bowel","🚽","bowel",bowel)+section("Other","▤","other",other);
  app.innerHTML=html;
 }
-function renderHistory(app){var html='<h1>History</h1><div class="sub">Previous daily assessments</div>';if(!reports){app.innerHTML=html+'<div class="card"><div class="muted">Load reports from your spreadsheet.</div><button class="btn" data-action="history">Load history</button></div>';return;}var list=reports.reports||[];if(!list.length)html+='<div class="card empty">No reports saved yet.</div>';list.forEach(function(r){html+='<div class="card"><div class="row"><b>'+esc(r.local_date||"Unknown date")+'</b><span class="pill">'+esc(r.status||"")+'</span></div><p>'+esc(r.day_summary||"No summary available.")+'</p><div class="muted">Version '+esc(r.version||"1")+'</div></div>';});app.innerHTML=html;}
+function renderHistory(app){var html='<h1>History</h1><div class="sub">Food, symptoms, bowel movements and other entries · last 30 days</div>';if(!reports){app.innerHTML=html+'<div class="card"><div class="muted">Browse your actual logged entries.</div><button class="btn" data-action="history">Load history</button></div>';return;}var list=reports.events||[];list=list.slice().sort(function(a,b){return String(b.occurred_at||b.started_at||b.sleep_start||b.local_date||"").localeCompare(String(a.occurred_at||a.started_at||a.sleep_start||a.local_date||""));});if(!list.length)html+='<div class="card empty">No entries found in the last 30 days.</div>';var lastDate="";list.forEach(function(e){var d=String(e.local_date||"Unknown date").slice(0,10);if(d!==lastDate){html+='<h2 style="margin:18px 2px 8px">'+esc(d)+'</h2>';lastDate=d;}html+='<div class="card"><div class="row"><b>'+esc(entryTitle(e))+'</b><span class="pill">'+esc(kind(e))+'</span></div><div class="muted">'+esc(dateLabel(e.occurred_at||e.started_at||e.sleep_start||e.created_at))+'</div>'+(entryDetail(e)?'<p>'+esc(entryDetail(e))+'</p>':'')+'</div>';});app.innerHTML=html;}
 function renderPatterns(app){var html='<h1>Patterns</h1><div class="sub">Hypotheses, not diagnoses</div>';if(!hypotheses){app.innerHTML=html+'<div class="card"><div class="muted">Load hypotheses and their supporting or contradictory evidence.</div><button class="btn" data-action="patterns">Load patterns</button></div>';return;}var list=hypotheses.hypotheses||[];if(!list.length)html+='<div class="card empty">No hypotheses recorded yet.</div>';list.forEach(function(h){html+='<div class="card"><div class="row"><b>'+esc(h.hypothesis||"Possible association")+'</b><span class="pill">'+esc(h.confidence||"Unknown")+'</span></div><p>'+esc(h.confidence_rationale||"")+'</p><div class="muted">For: '+esc(h.supporting_evidence||"Not recorded")+'</div><div class="muted" style="margin-top:6px">Against: '+esc(h.evidence_against||"Not recorded")+'</div><p class="muted">Next test: '+esc(h.next_test||"Not recorded")+'</p></div>';});app.innerHTML=html;}
-document.addEventListener("click",function(event){var target=event.target.closest("button");if(!target)return;if(target.dataset.page){page=target.dataset.page;render();return;}if(target.dataset.action)nativeRequest(target.dataset.action);});
+document.addEventListener("click",function(event){var target=event.target.closest("button");if(!target)return;if(target.dataset.page){page=target.dataset.page;render();return;}if(target.dataset.dateShift){shiftDate(Number(target.dataset.dateShift));return;}if(target.dataset.scroll){var section=document.getElementById("section-"+target.dataset.scroll);if(section)section.scrollIntoView({behavior:"smooth",block:"start"});return;}if(target.dataset.action)nativeRequest(target.dataset.action,target.dataset.action==="refresh"?(dashboard.date||selectedDate):null);});
+document.addEventListener("change",function(event){if(event.target&&event.target.id==="datePicker")chooseDate(event.target.value);});
 window.nativeDashboard=function(payload){if(payload.result)dashboard=payload.result;else dashboard={success:false,error:payload.error||"Dashboard request failed."};render();};
-window.nativeHistory=function(payload){if(payload.result)reports=payload.result;else reports={success:false,error:payload.error,reports:[]};render();};
+window.nativeHistory=function(payload){if(payload.result)reports=payload.result;else reports={success:false,error:payload.error,events:[]};render();};
 window.nativePatterns=function(payload){if(payload.result)hypotheses=payload.result;else hypotheses={success:false,error:payload.error,hypotheses:[]};render();};
-render();window.addEventListener("load",function(){setTimeout(function(){nativeRequest("refresh");},250);});
+render();window.addEventListener("load",function(){setTimeout(function(){nativeRequest("refresh",selectedDate);},250);});
 </script></body></html>`;
 
 
