@@ -54,7 +54,71 @@ paths:
                   type: string
                 data:
                   type: object
-                  description: Event fields matching the selected event sheet columns.
+                  description: Event fields matching the selected event sheet columns. Supply these as explicit properties inside data, not as top-level request fields.
+                  properties:
+                    meal_type:
+                      type: string
+                    description:
+                      type: string
+                    items_json:
+                      type: string
+                      description: JSON-encoded array of food items, including quantities and units.
+                    fodmap_groups:
+                      type: array
+                      items:
+                        type: string
+                    estimated_load:
+                      type: string
+                    symptoms:
+                      type: string
+                    fullness_score:
+                      type: number
+                    gas_level:
+                      type: string
+                    gas_smell:
+                      type: string
+                    acidity_score:
+                      type: number
+                    pain_score:
+                      type: number
+                    bowel_urgency:
+                      type: string
+                    onset_type:
+                      type: string
+                    stool_form:
+                      type: string
+                    urgency:
+                      type: string
+                    straining:
+                      type: boolean
+                    incomplete_emptying:
+                      type: boolean
+                    sleep_start:
+                      type: string
+                    wake_at:
+                      type: string
+                    duration_minutes:
+                      type: integer
+                    quality_score:
+                      type: number
+                    started_at:
+                      type: string
+                    ended_at:
+                      type: string
+                    activity_type:
+                      type: string
+                    intensity:
+                      type: string
+                    occurred_at:
+                      type: string
+                    local_date:
+                      type: string
+                    notes:
+                      type: string
+                    data_quality:
+                      type: string
+                    source_message_id:
+                      type: string
                   additionalProperties: true
       responses:
         '200':
