@@ -36,15 +36,10 @@ function localDateISO() {
 }
 
 async function main() {
-  const web = new WebView();
-  let initial;
   try {
-    initial = await api("dashboard", {date: localDateISO()});
-  } catch (e) {
-    initial = { success: false, error: String(e), events: [], counts: {} };
-  }
-
-  web.shouldAllowRequest = function(request) {
+    const web = new WebView();
+    const initial = await api("dashboard", {});
+    web.shouldAllowRequest = function(request) {
     if (!request.url.startsWith("gutgenie://")) {
       if (/^https?:\/\//i.test(request.url)) { Safari.open(request.url); return false; }
       return true;
@@ -113,8 +108,15 @@ window.nativeHistory=function(payload){if(payload.result)reports=payload.result;
 window.nativePatterns=function(payload){if(payload.result)hypotheses=payload.result;else hypotheses={success:false,error:payload.error,hypotheses:[]};render();};
 render();
 </script></body></html>`;
-  await web.loadHTML(html);
-  await web.present();
+    await web.loadHTML(html);
+    await web.present();
+  } catch (error) {
+    const alert = new Alert();
+    alert.title = "Gut Genie";
+    alert.message = String(error && error.message ? error.message : error);
+    alert.addAction("OK");
+    await alert.present();
+  }
 }
-
 await main();
+Script.complete();
