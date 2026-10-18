@@ -107,6 +107,8 @@ function doPost(e) {
         return ggReport_(ss, body);
       case "hypotheses":
         return ggHypotheses_(ss, body);
+      case "seed-demo-data":
+        return ggSeedDemoData_(ss);
       case "run-status":
         return ggRunStatus_();
       case "analyse-day":
@@ -126,7 +128,7 @@ function ggAuthorize_(body, action) {
   const expectedActionToken = props.getProperty("CHATGPT_ACTION_TOKEN");
   const actionTokenAllowed = [
     "health", "dashboard", "events", "log-event", "reports", "report",
-    "hypotheses", "run-status", "version", "update-event"
+    "hypotheses", "run-status", "version", "update-event", "seed-demo-data"
   ];
   if (actionToken && expectedActionToken && actionToken === expectedActionToken) {
     if (actionTokenAllowed.indexOf(action) < 0) {
@@ -398,6 +400,135 @@ function ggHypotheses_(ss, body) {
     return !status || String(r.status || "") === status;
   }).sort(function(a, b) { return String(b.created_at || "").localeCompare(String(a.created_at || "")); });
   return ggJson_({success: true, hypotheses: rows.slice(0, Math.max(1, Math.min(200, Number(body.limit || 100))))});
+}
+
+/**
+ * Inserts clearly labelled demo rows for UI testing.
+ * Idempotent: skips rows whose demo IDs already exist.
+ * Does not modify existing user records.
+ */
+function ggSeedDemoData_(ss) {
+  const setup = ggSetupSchema_(ss);
+  const now = new Date();
+  const demoDate1 = "2026-10-16";
+  const demoDate2 = "2026-10-17";
+  const stamp = Utilities.formatDate(now, GG_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss");
+
+  const reports = [
+    {
+      report_id: "DEMO-REPORT-2026-10-16",
+      local_date: demoDate1,
+      generated_at: stamp,
+      version: 1,
+      status: "demo",
+      day_summary: "DEMO ONLY — Example daily assessment. Not based on your health records.",
+      symptom_summary: "DEMO ONLY — Example mild bloating entry for interface testing.",
+      food_and_timing_summary: "DEMO ONLY — Example meal timing summary.",
+      sleep_summary: "DEMO ONLY — Example sleep summary.",
+      exercise_summary: "DEMO ONLY — Example activity summary.",
+      bowel_summary: "DEMO ONLY — Example bowel summary.",
+      strongest_associations: "DEMO ONLY — No real association inferred.",
+      evidence_against: "DEMO ONLY — Insufficient real observations.",
+      missing_data: "DEMO ONLY — Replace with actual observations.",
+      next_experiment: "DEMO ONLY — Record meals and symptoms consistently before testing associations.",
+      experiment_rationale: "DEMO ONLY — Illustrative text for UI testing.",
+      safety_note: "DEMO ONLY — Not medical advice or a clinical assessment."
+    },
+    {
+      report_id: "DEMO-REPORT-2026-10-17",
+      local_date: demoDate2,
+      generated_at: stamp,
+      version: 1,
+      status: "demo",
+      day_summary: "DEMO ONLY — Second example assessment for History screen testing.",
+      symptom_summary: "DEMO ONLY — Sample symptom summary.",
+      food_and_timing_summary: "DEMO ONLY — Sample food and timing summary.",
+      sleep_summary: "DEMO ONLY — Sample sleep summary.",
+      exercise_summary: "DEMO ONLY — Sample exercise summary.",
+      bowel_summary: "DEMO ONLY — Sample bowel summary.",
+      strongest_associations: "DEMO ONLY — No association has been established.",
+      evidence_against: "DEMO ONLY — No actual evidence assessed.",
+      missing_data: "DEMO ONLY — This is placeholder content.",
+      next_experiment: "DEMO ONLY — Continue logging before drawing conclusions.",
+      experiment_rationale: "DEMO ONLY — Illustrative text for UI testing.",
+      safety_note: "DEMO ONLY — Not medical advice or a clinical assessment."
+    }
+  ];
+
+  const hypotheses = [
+    {
+      analysis_id: "DEMO-ANALYSIS-001",
+      report_id: "DEMO-REPORT-2026-10-17",
+      created_at: stamp,
+      target_date: demoDate2,
+      hypothesis: "DEMO ONLY — Meal timing may relate to symptom timing",
+      factor_type: "meal_timing",
+      candidate_exposure: "DEMO ONLY — Example evening meal",
+      supporting_evidence: "DEMO ONLY — Placeholder; no user data evaluated.",
+      evidence_against: "DEMO ONLY — Placeholder; no user data evaluated.",
+      confounders: "DEMO ONLY — Portion size, meal composition, stress, and prior meals.",
+      observations_count: 0,
+      confidence: "demo",
+      confidence_rationale: "Demo record created only to test the Patterns interface.",
+      next_test: "DEMO ONLY — Log meal and symptom times; do not change diet based on this placeholder.",
+      status: "demo",
+      supersedes_analysis_id: ""
+    },
+    {
+      analysis_id: "DEMO-ANALYSIS-002",
+      report_id: "DEMO-REPORT-2026-10-16",
+      created_at: stamp,
+      target_date: demoDate1,
+      hypothesis: "DEMO ONLY — Portion size may affect fullness",
+      factor_type: "portion_size",
+      candidate_exposure: "DEMO ONLY — Example meal portion",
+      supporting_evidence: "DEMO ONLY — Placeholder; no user data evaluated.",
+      evidence_against: "DEMO ONLY — Placeholder; no user data evaluated.",
+      confounders: "DEMO ONLY — Meal composition, eating speed, and time of day.",
+      observations_count: 0,
+      confidence: "demo",
+      confidence_rationale: "Demo record created only to test the Patterns interface.",
+      next_test: "DEMO ONLY — Track portions and symptoms before evaluating any relationship.",
+      status: "demo",
+      supersedes_analysis_id: ""
+    }
+  ];
+
+  const addedReports = ggAppendDemoRows_(ss, "Daily Reports", reports, "report_id");
+  const addedHypotheses = ggAppendDemoRows_(ss, "Analysis Log", hypotheses, "analysis_id");
+  return ggJson_({
+    success: true,
+    demoOnly: true,
+    addedReports: addedReports,
+    addedHypotheses: addedHypotheses,
+    schemaCreated: setup.created || [],
+    schemaInitialized: setup.initializedEmptyTabs || [],
+    note: "Demo rows are clearly labelled and idempotent. They are not real health records."
+  });
+}
+
+function ggAppendDemoRows_(ss, sheetName, rows, idColumn) {
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet || sheet.getLastRow() < 1 || sheet.getLastColumn() < 1) {
+    throw new Error("Sheet schema is missing for " + sheetName + ". Run setup-schema and inspect-schema first.");
+  }
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].map(function(v) { return String(v).trim(); });
+  if (headers.indexOf(idColumn) < 0) throw new Error("Expected column " + idColumn + " is missing from " + sheetName + ".");
+  const existing = sheet.getLastRow() > 1
+    ? sheet.getRange(2, headers.indexOf(idColumn) + 1, sheet.getLastRow() - 1, 1).getDisplayValues().flat()
+    : [];
+  const existingSet = {};
+  existing.forEach(function(id) { existingSet[String(id)] = true; });
+  const pending = rows.filter(function(row) { return !existingSet[row[idColumn]]; });
+  if (!pending.length) return 0;
+  const values = pending.map(function(row) {
+    return headers.map(function(header) {
+      const value = row[header];
+      return value === undefined || value === null ? "" : value;
+    });
+  });
+  sheet.getRange(sheet.getLastRow() + 1, 1, values.length, headers.length).setValues(values);
+  return values.length;
 }
 
 function ggRunStatus_() {
