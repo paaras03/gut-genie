@@ -1,0 +1,32 @@
+[
+  {
+    "action": "log-event",
+    "token": "REPLACE_WITH_TEST_TOKEN",
+    "idempotency_key": "synthetic-food-event-001",
+    "event_type": "food",
+    "occurred_at": "2026-10-18T13:00:00+05:30",
+    "data": {
+      "meal_type": "Lunch",
+      "description": "Synthetic test meal",
+      "items_json": [
+        {"name": "rice", "quantity": 1, "unit": "bowl"},
+        {"name": "tofu", "quantity": 100, "unit": "g"}
+      ],
+      "data_quality": "complete"
+    }
+  },
+  {
+    "action": "log-event",
+    "token": "REPLACE_WITH_TEST_TOKEN",
+    "idempotency_key": "synthetic-symptom-event-001",
+    "event_type": "symptom",
+    "occurred_at": "2026-10-18T17:30:00+05:30",
+    "data": {
+      "symptoms": ["gas"],
+      "gas_level": "Medium",
+      "gas_smell": "Mild",
+      "description": "Synthetic test symptom",
+      "data_quality": "complete"
+    }
+  }
+]
