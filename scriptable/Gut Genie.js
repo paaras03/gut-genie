@@ -30,11 +30,45 @@ async function api(action, data) {
   return result;
 }
 
+function localDateISO() {
+  const d = new Date();
+  return [d.getFullYear(), String(d.getMonth() + 1).padStart(2, "0"), String(d.getDate()).padStart(2, "0")].join("-");
+}
+
+// Read event rows directly from the live Sheets-backed events endpoint.
+// This avoids the dashboard endpoint's exact-date comparison issue when
+// Google Sheets returns local_date cells as Date objects/ISO timestamps.
+async function loadLiveDashboard() {
+  const date = localDateISO();
+  const [eventResult, reportResult] = await Promise.all([
+    api("events", {from_date: date, to_date: date, limit: 500}),
+    api("reports", {limit: 30})
+  ]);
+  const events = (eventResult.events || []).filter(function(e) {
+    return String(e.local_date || "").slice(0, 10) === date;
+  });
+  const counts = {food: 0, symptom: 0, sleep: 0, exercise: 0, bowel: 0};
+  events.forEach(function(e) {
+    if (Object.prototype.hasOwnProperty.call(counts, e.event_type)) counts[e.event_type]++;
+  });
+  const reports = (reportResult.reports || []).filter(function(r) {
+    return String(r.local_date || "").slice(0, 10) === date;
+  }).sort(function(a, b) { return Number(b.version || 0) - Number(a.version || 0); });
+  return {
+    success: true,
+    date: date,
+    events: events,
+    counts: counts,
+    latestReport: reports[0] || null,
+    refreshedAt: new Date().toISOString()
+  };
+}
+
 async function main() {
   const web = new WebView();
   let initial;
   try {
-    initial = await api("dashboard", {});
+    initial = await loadLiveDashboard();
   } catch (e) {
     initial = { success: false, error: String(e), events: [], counts: {} };
   }
@@ -52,7 +86,7 @@ async function main() {
       params[decodeURIComponent(bits[0])] = decodeURIComponent(bits.slice(1).join("="));
     });
     if (params.action === "refresh") {
-      api("dashboard", {}).then(function(result) {
+      loadLiveDashboard().then(function(result) {
         web.evaluateJavaScript("window.nativeDashboard(" + JSON.stringify({result: result}) + ")", false);
       }).catch(function(error) {
         web.evaluateJavaScript("window.nativeDashboard(" + JSON.stringify({error: String(error)}) + ")", false);
