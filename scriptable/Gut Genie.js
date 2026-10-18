@@ -69,20 +69,20 @@ async function main() {
   const safeInitial = JSON.stringify(initial).replace(/</g, "\\u003c");
   const html = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <style>
-*{box-sizing:border-box}body{margin:0;padding:22px 15px 110px;background:#faf9f6;color:#171717;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
-h1{font-size:34px;font-weight:400;margin:0 0 5px}h2{font-size:22px;font-weight:400;margin:0 0 10px}p{line-height:1.45}.sub{color:#777;font-size:13px;margin-bottom:18px}
-button{font:inherit;cursor:pointer}.btn{border:0;border-radius:11px;padding:10px 13px;background:#eeeae3;color:#171717}
-.card,.metric{background:#fff;border:1px solid #e5e1d9;border-radius:15px;padding:14px;margin:9px 0}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.muted{font-size:12px;color:#777}
-.metricGrid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.metric strong{display:block;font-size:27px;font-weight:400;margin-bottom:3px}
-.pill{display:inline-block;border-radius:20px;background:#eeeae3;padding:5px 9px;font-size:12px}
-.nav{position:fixed;bottom:0;left:0;right:0;background:#faf9f6;border-top:1px solid #ddd;padding:8px 10px max(8px,env(safe-area-inset-bottom));display:flex;z-index:20}
-.nav button{flex:1;border:0;background:none;padding:8px 3px;color:#777;font-size:12px}.nav .on{background:#e3e0da;color:#171717;border-radius:11px}
-.empty{text-align:center;color:#777;padding:25px 10px}.event{border-left:2px solid #ddd8cf;padding:1px 0 13px 12px;margin-left:4px}
-.event b{font-size:14px;font-weight:600}.event p{font-size:13px;margin:4px 0;color:#555}.section{margin-top:24px}
-.error{background:#f7e9e5;border:1px solid #e8c8bf;border-radius:12px;padding:12px;color:#7a3020;font-size:13px;overflow-wrap:anywhere}
+*{box-sizing:border-box}body{margin:0;padding:22px 15px 100px;background:#faf9f6;color:#17211f;font-family:-apple-system,BlinkMacSystemFont,sans-serif}
+h1{font-size:32px;font-weight:650;letter-spacing:-.7px;margin:0}h2{font-size:20px;font-weight:650;margin:0}.sub{color:#7a817f;font-size:13px;margin:5px 0 18px}
+button{font:inherit;cursor:pointer}.btn{border:0;border-radius:12px;padding:9px 12px;background:#e9eee9;color:#214d3e}
+.summary{background:#fff;border:1px solid #e9e8e2;border-radius:19px;padding:14px;margin:16px 0 22px}.summaryHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.summaryHead span{font-size:12px;color:#7a817f}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}.metric{border-radius:13px;padding:11px 5px;text-align:center;min-width:0}.metric .ico{font-size:20px;display:block;margin-bottom:5px}.metric strong{font-size:23px;display:block;font-weight:650;line-height:1.1}.metric small{font-size:11px;display:block;margin-top:5px;color:#3e4844}
+.foodTint{background:#e5f3e8}.symptomTint{background:#fde8e5}.bowelTint{background:#eee7fb}.otherTint{background:#e3f0fc}
+.section{border-radius:18px;padding:10px;margin:13px 0;background:#fff;border:1px solid #eeece7}.section.food{background:#edf7ef;border-color:#e0eee3}.section.symptom{background:#fff0ee;border-color:#f7e4e0}.section.bowel{background:#f3effb;border-color:#eae3f7}.section.other{background:#edf6fe;border-color:#e0edf9}
+.sectionHead{display:flex;align-items:center;gap:10px;padding:3px 2px 10px}.sectionIcon{width:39px;height:39px;border-radius:50%;display:grid;place-items:center;font-size:21px;flex-shrink:0;background:#ffffff99}.sectionTitle{font-weight:650;font-size:16px}.sectionCount{font-size:12px;color:#737d78;margin-top:3px}
+.entry{background:#ffffffd9;border-radius:12px;padding:11px 10px;margin-top:5px;display:flex;align-items:flex-start;gap:9px}.dot{width:8px;height:8px;border-radius:50%;margin-top:6px;flex-shrink:0;background:#43815d}.symptom .dot{background:#d65c60}.bowel .dot{background:#8660bf}.other .dot{background:#3288ce}.entryMain{min-width:0;flex:1}.entryTitle{font-size:14px;font-weight:600;line-height:1.35;overflow-wrap:anywhere}.entryMeta{font-size:12px;color:#6d7571;margin-top:4px;line-height:1.35}.entryTime{font-size:11px;color:#858b88;white-space:nowrap;margin-left:4px}
+.empty{text-align:center;color:#858b88;padding:14px 6px;font-size:13px}.error{background:#f7e9e5;border:1px solid #e8c8bf;border-radius:12px;padding:12px;color:#7a3020;font-size:13px;overflow-wrap:anywhere}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#faf9f6;border-top:1px solid #e6e3dc;padding:7px 10px max(8px,env(safe-area-inset-bottom));display:flex;z-index:20}.nav button{flex:1;border:0;background:none;padding:8px 3px;color:#858b88;font-size:12px}.nav .on{color:#174c3b;font-weight:650}.nav .symbol{font-size:19px;line-height:1.3}
+.card{background:#fff;border:1px solid #e9e8e2;border-radius:15px;padding:14px;margin:9px 0}.row{display:flex;align-items:center;justify-content:space-between;gap:10px}.muted{font-size:12px;color:#777}.pill{display:inline-block;border-radius:20px;background:#eeeae3;padding:5px 9px;font-size:12px}
 </style></head><body><div id="app"><h1>Gut Genie</h1><div class="card">Starting dashboard…</div></div>
-<div class="nav"><button id="navToday" class="on" data-page="today">◷<br>Today</button><button id="navHistory" data-page="history">▤<br>History</button><button id="navPatterns" data-page="patterns">⌁<br>Patterns</button></div>
+<div class="nav"><button class="on" data-page="today"><span class="symbol">⌂</span><br>Today</button><button data-page="history"><span class="symbol">▦</span><br>History</button><button data-page="patterns"><span class="symbol">⌁</span><br>Patterns</button></div>
 <script>
 var dashboard = ${safeInitial}; var reports = null; var hypotheses = null; var page = "today";
 function esc(v){return String(v==null?"":v).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
@@ -91,20 +91,23 @@ window.onerror=function(message,source,line,column){showError(String(message)+" 
 window.onunhandledrejection=function(event){showError(event&&event.reason?String(event.reason.message||event.reason):"Unknown asynchronous error");};
 function dateLabel(value){if(!value)return "";var d=new Date(value);return isNaN(d)?"":d.toLocaleTimeString([],{hour:"numeric",minute:"2-digit"});}
 function nativeRequest(action){location.href="gutgenie://?action="+encodeURIComponent(action);}
+function kind(e){return String(e.event_type||e.type||"other").toLowerCase();}
+function category(e){var t=kind(e);if(t==="food"||t==="meal"||t==="drink")return "food";if(t==="symptom")return "symptom";if(t==="bowel"||t==="bowel_movement"||t==="stool")return "bowel";return "other";}
+function entryTitle(e){var t=kind(e);return e.description||e.meal_type||e.activity_type||e.symptoms||(t==="bowel"||t==="bowel_movement"?"Bowel movement":t==="sleep"?"Sleep":t==="exercise"?"Exercise":t==="food"?"Food entry":t==="symptom"?"Symptom":"Other entry");}
+function entryDetail(e){return e.notes||e.items_json||e.intensity||e.consistency||e.food_items||"";}
+function metric(n,label,ico,tint){return '<div class="metric '+tint+'"><span class="ico">'+ico+'</span><strong>'+n+'</strong><small>'+label+'</small></div>';}
+function section(title,icon,type,events){var html='<section class="section '+type+'"><div class="sectionHead"><div class="sectionIcon">'+icon+'</div><div><div class="sectionTitle">'+title+'</div><div class="sectionCount">'+events.length+' '+(events.length===1?'entry':'entries')+' today</div></div></div>';if(!events.length)html+='<div class="empty">Nothing tracked in this section today</div>';events.forEach(function(e){var when=e.occurred_at||e.started_at||e.sleep_start||e.wake_at||e.created_at;html+='<div class="entry"><span class="dot"></span><div class="entryMain"><div class="entryTitle">'+esc(entryTitle(e))+'</div>'+(entryDetail(e)?'<div class="entryMeta">'+esc(entryDetail(e))+'</div>':'')+'</div><span class="entryTime">'+esc(dateLabel(when))+'</span></div>';});return html+'</section>';}
 function render(){document.querySelectorAll(".nav button").forEach(function(b){b.classList.toggle("on",b.dataset.page===page);});var app=document.getElementById("app");if(page==="today")renderToday(app);else if(page==="history")renderHistory(app);else renderPatterns(app);}
-function metric(value,label){return '<div class="metric"><strong>'+Number(value||0)+'</strong><span class="muted">'+label+'</span></div>';}
 function renderToday(app){
- if(!dashboard||!dashboard.success){app.innerHTML='<h1>Gut Genie</h1><div class="sub">Your digestive patterns, over time</div><div class="error">'+esc(dashboard&&dashboard.error||"Dashboard could not load.")+'</div><button class="btn" data-action="refresh">Retry</button>';return;}
- var counts=dashboard.counts||{},events=dashboard.events||[],report=dashboard.latestReport;
- var html='<div class="row"><div><h1>Gut Genie</h1><div class="sub">Your digestive patterns, over time</div></div><button class="btn" data-action="refresh">↻ Refresh</button></div>';
- html+='<div class="metricGrid">'+metric(counts.food,"Meals & drinks")+metric(counts.symptom,"Symptom logs")+metric(counts.sleep,"Sleep records")+metric(counts.exercise,"Exercise records")+'</div>';
- html+='<div class="section"><div class="row"><h2>Today’s timeline</h2><span class="muted">'+esc(dashboard.date||"")+'</span></div>';
- if(dashboard.loading)html+='<div class="card empty">Loading today’s records…</div>';else if(!events.length)html+='<div class="card empty">No events logged for this day yet.</div>';
- events.forEach(function(e){var time=e.occurred_at||e.started_at||e.sleep_start||e.wake_at;var title=e.description||e.meal_type||e.activity_type||e.event_type||"Event";if(e.event_type==="food")title=e.description||e.meal_type||"Meal";if(e.event_type==="sleep")title="Sleep";if(e.event_type==="symptom")title=e.description||e.symptoms||"Symptoms";html+='<div class="event"><div class="row"><b>'+esc(title)+'</b><span class="muted">'+esc(dateLabel(time))+'</span></div><p>'+esc(e.notes||e.items_json||e.intensity||"")+'</p><span class="pill">'+esc(e.event_type||"event")+'</span></div>';});
- html+='</div><div class="section"><h2>Daily assessment</h2><div class="card">';
- if(report)html+='<div class="row"><span class="pill">'+esc(report.status||"saved")+'</span><span class="muted">Version '+esc(report.version||"1")+'</span></div><p>'+esc(report.day_summary||"Open the report for details.")+'</p><p class="muted">'+esc(report.next_experiment||"No next experiment recorded.")+'</p>';
- else html+='<div class="muted">No daily report available yet.</div>';
- app.innerHTML=html+'</div></div>';
+ if(!dashboard||!dashboard.success){app.innerHTML='<h1>Gut Genie</h1><div class="sub">Your daily digestive log</div><div class="error">'+esc(dashboard&&dashboard.error||"Dashboard could not load.")+'</div><button class="btn" data-action="refresh">Retry</button>';return;}
+ var events=dashboard.events||[],foods=[],symptoms=[],bowel=[],other=[];
+ events.forEach(function(e){var c=category(e);if(c==="food")foods.push(e);else if(c==="symptom")symptoms.push(e);else if(c==="bowel")bowel.push(e);else other.push(e);});
+ var date=dashboard.date||localDateISO();
+ var html='<div class="row"><div><h1>Gut Genie</h1><div class="sub" style="margin-bottom:0">Your daily digestive log</div></div><button class="btn" data-action="refresh">↻ Refresh</button></div>';
+ html+='<div class="summary"><div class="summaryHead"><b>Today at a glance</b><span>'+esc(date)+'</span></div><div class="metrics">'+metric(foods.length,"Foods","🍴","foodTint")+metric(symptoms.length,"Symptoms","〽️","symptomTint")+metric(bowel.length,"Bowel","🚽","bowelTint")+metric(other.length,"Other","▤","otherTint")+'</div></div>';
+ if(dashboard.loading)html+='<div class="card empty">Loading today’s records…</div>';
+ html+=section("Foods","🍴","food",foods)+section("Symptoms","〽️","symptom",symptoms)+section("Bowel","🚽","bowel",bowel)+section("Other","▤","other",other);
+ app.innerHTML=html;
 }
 function renderHistory(app){var html='<h1>History</h1><div class="sub">Previous daily assessments</div>';if(!reports){app.innerHTML=html+'<div class="card"><div class="muted">Load reports from your spreadsheet.</div><button class="btn" data-action="history">Load history</button></div>';return;}var list=reports.reports||[];if(!list.length)html+='<div class="card empty">No reports saved yet.</div>';list.forEach(function(r){html+='<div class="card"><div class="row"><b>'+esc(r.local_date||"Unknown date")+'</b><span class="pill">'+esc(r.status||"")+'</span></div><p>'+esc(r.day_summary||"No summary available.")+'</p><div class="muted">Version '+esc(r.version||"1")+'</div></div>';});app.innerHTML=html;}
 function renderPatterns(app){var html='<h1>Patterns</h1><div class="sub">Hypotheses, not diagnoses</div>';if(!hypotheses){app.innerHTML=html+'<div class="card"><div class="muted">Load hypotheses and their supporting or contradictory evidence.</div><button class="btn" data-action="patterns">Load patterns</button></div>';return;}var list=hypotheses.hypotheses||[];if(!list.length)html+='<div class="card empty">No hypotheses recorded yet.</div>';list.forEach(function(h){html+='<div class="card"><div class="row"><b>'+esc(h.hypothesis||"Possible association")+'</b><span class="pill">'+esc(h.confidence||"Unknown")+'</span></div><p>'+esc(h.confidence_rationale||"")+'</p><div class="muted">For: '+esc(h.supporting_evidence||"Not recorded")+'</div><div class="muted" style="margin-top:6px">Against: '+esc(h.evidence_against||"Not recorded")+'</div><p class="muted">Next test: '+esc(h.next_test||"Not recorded")+'</p></div>';});app.innerHTML=html;}
@@ -112,9 +115,9 @@ document.addEventListener("click",function(event){var target=event.target.closes
 window.nativeDashboard=function(payload){if(payload.result)dashboard=payload.result;else dashboard={success:false,error:payload.error||"Dashboard request failed."};render();};
 window.nativeHistory=function(payload){if(payload.result)reports=payload.result;else reports={success:false,error:payload.error,reports:[]};render();};
 window.nativePatterns=function(payload){if(payload.result)hypotheses=payload.result;else hypotheses={success:false,error:payload.error,hypotheses:[]};render();};
-render();
-window.addEventListener("load",function(){setTimeout(function(){nativeRequest("refresh");},250);});
+render();window.addEventListener("load",function(){setTimeout(function(){nativeRequest("refresh");},250);});
 </script></body></html>`;
+
 
   try { await web.loadHTML(html); await web.present(); }
   catch(error){const alert=new Alert();alert.title="Gut Genie startup error";alert.message=String(error&&error.message?error.message:error);alert.addAction("OK");await alert.present();}
