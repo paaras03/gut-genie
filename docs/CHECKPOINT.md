@@ -1,37 +1,49 @@
 # Gut Genie — Project Checkpoint
 
 **Status date:** 2026-10-18  
-**Phase:** 0 — specification and architecture review
+**Phase:** 1 — initial API and Scriptable scaffolds committed; live spreadsheet inspection still pending
 
-## Completed
+## Completed in GitHub
 
-- Read the Recipe Tracker repository structure and core documentation, including product spec, architecture framework, backend infrastructure and config/decision notes.
-- Added `docs/PRODUCT-SPEC.md` with architecture, event flows, proposed sheet tabs and headers, API actions, Scriptable screen/navigation design, Recipe Tracker-inspired visual direction, daily analysis methodology, security constraints, acceptance criteria and open decisions.
-- Added project README with the intended architecture and integration caveat.
-- Designated the user-supplied Google Spreadsheet as the intended data store: https://docs.google.com/spreadsheets/d/1rIQWc2thSUKHDiFOUtH9fSSkgI5hqisTrblaLVtW8jQ/edit
+- Read the Recipe Tracker implementation and key documentation for Scriptable WebView UI, visual style, API calls, Apps Script routing, header-based sheet access and deployment rules.
+- Added the product/technical specification.
+- Added the Apps Script API scaffold at google-apps-script/Code.gs.
+- Added Apps Script manifest at google-apps-script/appsscript.json.
+- Added Scriptable UI scaffold at scriptable/Gut Genie.js, using Recipe Tracker's warm neutral palette, cards and persistent bottom navigation.
+- Added manual connection/inspection steps at docs/IMPLEMENTATION-SETUP.md.
+- Designated the user's spreadsheet: https://docs.google.com/spreadsheets/d/1rIQWc2thSUKHDiFOUtH9fSSkgI5hqisTrblaLVtW8jQ/edit
 
-## Not done yet
+## API actions in the current source
 
-- The spreadsheet contents/tabs have not been inspected or changed.
-- No Apps Script source has been implemented or deployed.
-- No Scriptable UI source exists yet.
-- No ChatGPT-to-Apps-Script integration is configured.
-- No daily-analysis trigger has been created.
-- Nothing has been tested end-to-end.
+- Generic public GET version response (no sheet data).
+- Authenticated POST JSON: version, health, inspect-schema, setup-schema, dashboard, events, log-event, update-event, reports, report, hypotheses, run-status.
+- analyse-day intentionally returns ANALYSIS_NOT_IMPLEMENTED until the analysis engine is designed and tested.
 
-## Next steps
+## Not yet done / not verified
 
-1. Inspect existing spreadsheet tabs/headers and preserve all existing data.
-2. Confirm the spreadsheet schema, then build a secure Apps Script API with health/version/read/write actions.
-3. Build the Scriptable dashboard with synthetic data, following Recipe Tracker's warm neutral cards and persistent bottom navigation.
-4. Determine and configure a secure ChatGPT logging connection; do not claim automatic logging until a successful write/read test works.
-5. Implement whole-day analysis, evidence/counter-evidence storage, report versioning and the Apps Script time trigger.
-6. Verify deployments explicitly; GitHub and Apps Script are not automatically synchronized.
+- The live spreadsheet's existing tabs and headers have not been read; web access to the sheet was unavailable in this environment.
+- No tabs have been created, renamed or modified.
+- Apps Script source has not been installed/deployed in the user's Google account.
+- Scriptable has not been run against the live API.
+- Code has not been tested end-to-end on iPhone/Scriptable.
+- ChatGPT-to-API logging integration is not configured.
+- Daily analysis engine and scheduled trigger do not exist yet.
+
+## Immediate next steps
+
+1. Follow docs/IMPLEMENTATION-SETUP.md to create the bound Apps Script project and set Script Properties.
+2. Run the read-only inspectGutGenieSpreadsheet() helper in Apps Script and share its output, or deploy and call authenticated inspect-schema.
+3. Review existing tabs/headers before running setup-schema. Preserve any data already in the spreadsheet.
+4. Test a synthetic event write and dashboard read-back.
+5. Iterate on Scriptable UI after API response shapes are confirmed.
+6. Design the daily analysis and trigger, including evidence links, contradictory evidence, report versioning and sparse-data handling.
+7. Research and configure a secure ChatGPT write path; don't claim automatic capture until verified.
 
 ## Constraints
 
 - Scriptable is the iPhone app/UI; do not substitute a hosted web application.
 - Google Sheets is the source of truth.
-- Never store private event data or secret values in GitHub.
-- Reports must separate observations from hypotheses and must include contradictory evidence.
-- Do not treat correlations as diagnosis or proof of causation.
+- Never store secrets or real personal health data in GitHub.
+- Keep raw observations separate from hypotheses and reports.
+- Correlations are not diagnoses or proof of causation.
+- GitHub changes do not automatically deploy to Apps Script.
