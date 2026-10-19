@@ -196,7 +196,7 @@ function renderToday(app){
  html+='<button class="card" style="width:100%;text-align:left;cursor:pointer" data-action="open-report"><div class="row"><div><b>Daily Report</b><div class="muted" style="margin-top:5px">Summary, possible associations and next steps</div></div><span style="font-size:22px">›</span></div></button>';
  if(dashboard.loading)html+='<div class="card empty">Loading today’s records…</div>';
  html+=section("Foods","🍴","food",foods)+section("Symptoms","〽️","symptom",symptoms)+section("Bowel","🚽","bowel",bowel)+section("Other","▤","other",other);
- html+='<button class=card data-action=add-medication><b>+ Medication &amp; Supplements</b><div class=muted>Log antacids, vitamins, dose and time taken</div></button>';
+
  html+=section("Medication & Supplements","+","other",medications);
  app.innerHTML=html;
 }
