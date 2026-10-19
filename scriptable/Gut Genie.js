@@ -58,6 +58,29 @@ async function main() {
       });
     } catch (e) { console.error(String(e)); return false; }
 
+    if (params.action === "add-medication") {
+      (async function() {
+        const form = new Alert();
+        form.title = "Log medication or supplement";
+        form.addTextField("Medication name (required)", "");
+        form.addTextField("Dose", "");
+        form.addTextField("Unit (tablet, mg, ml)", "tablet");
+        form.addTextField("Purpose (optional)", "");
+        form.addTextField("Notes (optional)", "");
+        form.addAction("Save"); form.addCancelAction("Cancel");
+        if (await form.presentAlert() !== 0) return;
+        const name = form.textFieldValue(0).trim();
+        if (!name) { const a = new Alert(); a.title = "Medication name required"; a.addAction("OK"); await a.present(); return; }
+        const now = new Date();
+        const date = [now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
+        try {
+          await api("log-event", {event_type:"medication",data:{medication_name:name,dose:form.textFieldValue(1).trim(),unit:form.textFieldValue(2).trim(),purpose:form.textFieldValue(3).trim(),notes:form.textFieldValue(4).trim(),taken_at:now.toISOString(),local_date:date},idempotency_key:"med-"+now.getTime()});
+          const result = await api("dashboard", {date:selectedDate || date});
+          await web.evaluateJavaScript("window.nativeDashboard("+JSON.stringify({result})+")", false);
+        } catch(error) { const a = new Alert(); a.title = "Could not save medication"; a.message = String(error); a.addAction("OK"); await a.present(); }
+      })();
+      return false;
+    }
     if (params.action === "refresh") {
       selectedDate = params.date || selectedDate || localDateISO();
       api("dashboard", {date:selectedDate})
@@ -112,8 +135,8 @@ function shiftDate(delta){var d=new Date((dashboard.date||selectedDate||localDat
 function chooseDate(value){if(!value)return;selectedDate=value;dashboard={success:true,loading:true,date:value,events:[],counts:{}};render();nativeRequest("refresh",value);}
 function kind(e){return String(e.event_type||e.type||"other").toLowerCase();}
 function category(e){var t=kind(e);if(t==="food"||t==="meal"||t==="drink")return "food";if(t==="symptom")return "symptom";if(t==="bowel"||t==="bowel_movement"||t==="stool")return "bowel";return "other";}
-function entryTitle(e){var t=kind(e);return e.description||e.meal_type||e.activity_type||e.symptoms||(t==="bowel"||t==="bowel_movement"?"Bowel movement":t==="sleep"?"Sleep":t==="exercise"?"Exercise":t==="food"?"Food entry":t==="symptom"?"Symptom":"Other entry");}
-function entryDetail(e){return e.notes||e.items_json||e.intensity||e.consistency||e.food_items||"";}
+function entryTitle(e){var t=kind(e);return e.medication_name||e.description||e.meal_type||e.activity_type||e.symptoms||(t==="bowel"||t==="bowel_movement"?"Bowel movement":t==="sleep"?"Sleep":t==="exercise"?"Exercise":t==="food"?"Food entry":t==="symptom"?"Symptom":"Other entry");}
+function entryDetail(e){return [e.dose&&((e.dose+" "+(e.unit||"")).trim()),e.purpose,e.notes,e.items_json,e.intensity,e.consistency,e.food_items].filter(Boolean).join(" · ");}
 function metric(n,label,ico,tint,target){return '<button type="button" class="metric '+tint+'" data-scroll="'+target+'"><span class="ico">'+ico+'</span><strong>'+n+'</strong><small>'+label+'</small></button>';}
 function section(title,icon,type,events){var html='<section id="section-'+type+'" class="section '+type+'"><div class="sectionHead"><div class="sectionIcon">'+icon+'</div><div><div class="sectionTitle">'+title+'</div><div class="sectionCount">'+events.length+' '+(events.length===1?'entry':'entries')+' today</div></div></div>';if(!events.length)html+='<div class="empty">Nothing tracked in this section on the selected date</div>';events.forEach(function(e){var when=e.occurred_at||e.started_at||e.sleep_start||e.wake_at||e.created_at;html+='<div class="entry"><span class="dot"></span><div class="entryMain"><div class="entryTitle">'+esc(entryTitle(e))+'</div>'+(entryDetail(e)?'<div class="entryMeta">'+esc(entryDetail(e))+'</div>':'')+'</div><span class="entryTime">'+esc(dateLabel(when))+'</span></div>';});return html+'</section>';}
 function render(){document.querySelectorAll(".nav button").forEach(function(b){b.classList.toggle("on",b.dataset.page===page);});var app=document.getElementById("app");if(page==="today")renderToday(app);else if(page==="history")renderHistory(app);else if(page==="report")renderReport(app);else renderPatterns(app);}
@@ -123,6 +146,8 @@ function renderToday(app){
  if(!dashboard||!dashboard.success){app.innerHTML='<h1>Gut Genie</h1><div class="sub">Your daily digestive log</div><div class="error">'+esc(dashboard&&dashboard.error||"Dashboard could not load.")+'</div><button class="btn" data-action="refresh">Retry</button>';return;}
  var events=dashboard.events||[],foods=[],symptoms=[],bowel=[],other=[];
  events.forEach(function(e){var c=category(e);if(c==="food")foods.push(e);else if(c==="symptom")symptoms.push(e);else if(c==="bowel")bowel.push(e);else other.push(e);});
+ var medications=events.filter(function(e){return kind(e)==="medication";});
+ other=other.filter(function(e){return kind(e)!=="medication";});
  var date=dashboard.date||localDateISO();
  var html='<div class="row"><div><h1>Gut Genie</h1><div class="sub" style="margin-bottom:0">Your daily digestive log</div></div><button class="btn" data-action="refresh">↻ Refresh</button></div>';
  html+='<div class="dateSwitch"><button data-date-shift="-1" aria-label="Previous day">‹</button><input id="datePicker" type="date" value="'+esc(date)+'" aria-label="Select date"><button data-date-shift="1" aria-label="Next day">›</button></div>';
@@ -130,6 +155,8 @@ function renderToday(app){
  html+='<button class="card" style="width:100%;text-align:left;cursor:pointer" data-action="open-report"><div class="row"><div><b>Daily Report</b><div class="muted" style="margin-top:5px">Summary, possible associations and next steps</div></div><span style="font-size:22px">›</span></div></button>';
  if(dashboard.loading)html+='<div class="card empty">Loading today’s records…</div>';
  html+=section("Foods","🍴","food",foods)+section("Symptoms","〽️","symptom",symptoms)+section("Bowel","🚽","bowel",bowel)+section("Other","▤","other",other);
+ html+='<button class=card data-action=add-medication><b>+ Medication &amp; Supplements</b><div class=muted>Log antacids, vitamins, dose and time taken</div></button>';
+ html+=section("Medication & Supplements","+","other",medications);
  app.innerHTML=html;
 }
 function renderHistory(app){var html='<h1>History</h1><div class="sub">Food, symptoms, bowel movements and other entries · last 30 days</div>';if(!reports){app.innerHTML=html+'<div class="card"><div class="muted">Browse your actual logged entries.</div><button class="btn" data-action="history">Load history</button></div>';return;}var list=reports.events||[];list=list.slice().sort(function(a,b){return String(b.occurred_at||b.started_at||b.sleep_start||b.local_date||"").localeCompare(String(a.occurred_at||a.started_at||a.sleep_start||a.local_date||""));});if(!list.length)html+='<div class="card empty">No entries found in the last 30 days.</div>';var lastDate="";list.forEach(function(e){var d=String(e.local_date||"Unknown date").slice(0,10);if(d!==lastDate){html+='<h2 style="margin:18px 2px 8px">'+esc(d)+'</h2>';lastDate=d;}html+='<div class="card"><div class="row"><b>'+esc(entryTitle(e))+'</b><span class="pill">'+esc(kind(e))+'</span></div><div class="muted">'+esc(dateLabel(e.occurred_at||e.started_at||e.sleep_start||e.created_at))+'</div>'+(entryDetail(e)?'<p>'+esc(entryDetail(e))+'</p>':'')+'</div>';});app.innerHTML=html;}
