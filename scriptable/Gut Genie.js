@@ -32,9 +32,16 @@ async function api(action, data) {
 }
 
 async function main() {
-  const web = new WebView();
-  const initial = {success:true, loading:true, date:localDateISO(), events:[], counts:{}};
+  // Fetch the first dashboard natively before rendering the WebView. This avoids
+  // the initial custom-scheme bridge request racing WebView presentation.
   let selectedDate = localDateISO();
+  let initial;
+  try {
+    initial = await api("dashboard", {date:selectedDate});
+  } catch (error) {
+    initial = {success:false, error:String(error && error.message ? error.message : error), date:selectedDate, events:[], counts:{}};
+  }
+  const web = new WebView();
 
   web.shouldAllowRequest = function(request) {
     const url = request.url || "";
@@ -133,7 +140,7 @@ window.nativeDashboard=function(payload){if(payload.result)dashboard=payload.res
 window.nativeReport=function(payload){reportLoading=false;if(payload.result)dailyReport=payload.result;else dailyReport={success:false,error:payload.error,report:null};render();};
 window.nativeHistory=function(payload){if(payload.result)reports=payload.result;else reports={success:false,error:payload.error,events:[]};render();};
 window.nativePatterns=function(payload){if(payload.result)hypotheses=payload.result;else hypotheses={success:false,error:payload.error,hypotheses:[]};render();};
-render();window.addEventListener("load",function(){\n  // Let Scriptable finish presenting the WebView before the first native bridge/API round-trip.\n  // The initial callback can otherwise race WebView startup and surface a generic “Script error”.\n  setTimeout(function(){nativeRequest("refresh",selectedDate);},800);\n});
+render();
 </script></body></html>`;
 
 
