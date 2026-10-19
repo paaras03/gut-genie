@@ -59,25 +59,38 @@ async function main() {
     } catch (e) { console.error(String(e)); return false; }
 
     if (params.action === "add-medication") {
+      web.evaluateJavaScript("window.showMedicationForm()", false);
+      return false;
+    }
+    if (params.action === "save-medication") {
       (async function() {
-        const form = new Alert();
-        form.title = "Log medication or supplement";
-        form.addTextField("Medication name (required)", "");
-        form.addTextField("Dose", "");
-        form.addTextField("Unit (tablet, mg, ml)", "tablet");
-        form.addTextField("Purpose (optional)", "");
-        form.addTextField("Notes (optional)", "");
-        form.addAction("Save"); form.addCancelAction("Cancel");
-        if (await form.presentAlert() !== 0) return;
-        const name = form.textFieldValue(0).trim();
-        if (!name) { const a = new Alert(); a.title = "Medication name required"; a.addAction("OK"); await a.present(); return; }
+        const name = (params.name || "").trim();
+        if (!name) {
+          await web.evaluateJavaScript("window.nativeMedicationStatus('Enter a medication or supplement name.')", false);
+          return;
+        }
         const now = new Date();
         const date = [now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");
         try {
-          await api("log-event", {event_type:"medication",data:{medication_name:name,dose:form.textFieldValue(1).trim(),unit:form.textFieldValue(2).trim(),purpose:form.textFieldValue(3).trim(),notes:form.textFieldValue(4).trim(),taken_at:now.toISOString(),local_date:date},idempotency_key:"med-"+now.getTime()});
+          await api("log-event", {
+            event_type:"medication",
+            data:{
+              medication_name:name,
+              dose:params.dose || "",
+              unit:params.unit || "tablet",
+              purpose:params.purpose || "",
+              notes:params.notes || "",
+              taken_at:now.toISOString(),
+              local_date:date
+            },
+            idempotency_key:"med-"+now.getTime()
+          });
           const result = await api("dashboard", {date:selectedDate || date});
+          await web.evaluateJavaScript("window.nativeMedicationStatus('Medication saved.')", false);
           await web.evaluateJavaScript("window.nativeDashboard("+JSON.stringify({result})+")", false);
-        } catch(error) { const a = new Alert(); a.title = "Could not save medication"; a.message = String(error); a.addAction("OK"); await a.present(); }
+        } catch(error) {
+          await web.evaluateJavaScript("window.nativeMedicationStatus("+JSON.stringify("Could not save medication: "+String(error && error.message ? error.message : error))+")", false);
+        }
       })();
       return false;
     }
@@ -142,6 +155,34 @@ function section(title,icon,type,events){var html='<section id="section-'+type+'
 function render(){document.querySelectorAll(".nav button").forEach(function(b){b.classList.toggle("on",b.dataset.page===page);});var app=document.getElementById("app");if(page==="today")renderToday(app);else if(page==="history")renderHistory(app);else if(page==="report")renderReport(app);else renderPatterns(app);}
 function reportField(label,value,icon){if(!value)return "";return '<div class="card"><div class="row"><b>'+esc(label)+'</b><span>'+icon+'</span></div><p style="font-size:14px;line-height:1.5;margin:9px 0 0;white-space:pre-wrap">'+esc(value)+'</p></div>';}
 function renderReport(app){var r=dailyReport&&dailyReport.report;var date=(dashboard&&dashboard.date)||selectedDate||localDateISO();var html='<button class="btn" data-action="back-today">‹ Today</button><h1 style="margin-top:18px">Daily Report</h1><div class="sub">'+esc(date)+'</div>';if(reportLoading){app.innerHTML=html+'<div class="card empty">Loading saved report…</div>';return;}if(!r){app.innerHTML=html+'<div class="card"><b>No saved report for this date</b><p class="muted">Your individual logs are available on Today. A consolidated report will appear here once one has been generated and saved to Daily Reports.</p><button class="btn" data-action="retry-report">Check again</button></div>';return;}html+=reportField("Overall Summary",r.day_summary,"▤")+reportField("Food and Timing",r.food_and_timing_summary,"🍴")+reportField("Symptoms",r.symptom_summary,"◉")+reportField("Bowel Movements",r.bowel_summary,"▣")+reportField("Sleep",r.sleep_summary,"☾")+reportField("Exercise",r.exercise_summary,"↗")+reportField("Key Insights",r.strongest_associations,"⌁")+reportField("Evidence Against / Confounders",r.evidence_against,"≠")+reportField("Missing Data",r.missing_data,"?")+reportField("Next Experiment",r.next_experiment,"→")+reportField("Why This Helps",r.experiment_rationale,"i")+reportField("Safety Note",r.safety_note,"!");html+='<div class="muted" style="text-align:center;margin:16px 0">Report version '+esc(r.version||"1")+' · '+esc(r.status||"saved")+'</div>';app.innerHTML=html;}
+function showMedicationForm(){
+ var old=document.getElementById("medicationForm");
+ if(old){old.remove();return;}
+ var box=document.createElement("div");
+ box.id="medicationForm";
+ box.className="card";
+ box.innerHTML='<h2 style="margin-bottom:12px">Log medication or supplement</h2>'+
+ '<form id="medicationEntryForm">'+
+ '<label class="muted" for="medName">Name (required)</label><input id="medName" name="name" required placeholder="e.g. Vitamin B12" style="display:block;width:100%;font:inherit;padding:11px;border:1px solid #ddd;border-radius:10px;margin:5px 0 10px">'+
+ '<label class="muted" for="medDose">Dose</label><input id="medDose" name="dose" placeholder="e.g. 1 or 500" style="display:block;width:100%;font:inherit;padding:11px;border:1px solid #ddd;border-radius:10px;margin:5px 0 10px">'+
+ '<label class="muted" for="medUnit">Unit</label><input id="medUnit" name="unit" value="tablet" placeholder="tablet, mg, ml" style="display:block;width:100%;font:inherit;padding:11px;border:1px solid #ddd;border-radius:10px;margin:5px 0 10px">'+
+ '<label class="muted" for="medPurpose">Purpose</label><input id="medPurpose" name="purpose" placeholder="Optional" style="display:block;width:100%;font:inherit;padding:11px;border:1px solid #ddd;border-radius:10px;margin:5px 0 10px">'+
+ '<label class="muted" for="medNotes">Notes</label><textarea id="medNotes" name="notes" placeholder="Optional" rows="2" style="display:block;width:100%;font:inherit;padding:11px;border:1px solid #ddd;border-radius:10px;margin:5px 0 12px"></textarea>'+
+ '<div class="row"><button class="btn" type="submit">Save medication</button><button class="btn" type="button" id="cancelMedication">Cancel</button></div><div id="medicationStatus" class="muted" style="margin-top:10px"></div></form>';
+ var today=document.getElementById("app");
+ today.insertBefore(box,today.children[2]||null);
+ document.getElementById("cancelMedication").addEventListener("click",function(){box.remove();});
+ document.getElementById("medicationEntryForm").addEventListener("submit",function(ev){
+  ev.preventDefault();
+  var values={name:document.getElementById("medName").value.trim(),dose:document.getElementById("medDose").value.trim(),unit:document.getElementById("medUnit").value.trim(),purpose:document.getElementById("medPurpose").value.trim(),notes:document.getElementById("medNotes").value.trim()};
+  var query=Object.keys(values).map(function(k){return encodeURIComponent(k)+"="+encodeURIComponent(values[k]);}).join("&");
+  document.getElementById("medicationStatus").textContent="Saving…";
+  location.href="gutgenie://?action=save-medication&"+query;
+ });
+ document.getElementById("medName").focus();
+}
+window.showMedicationForm=showMedicationForm;
+window.nativeMedicationStatus=function(message){var el=document.getElementById("medicationStatus");if(el)el.textContent=message;};
 function renderToday(app){
  if(!dashboard||!dashboard.success){app.innerHTML='<h1>Gut Genie</h1><div class="sub">Your daily digestive log</div><div class="error">'+esc(dashboard&&dashboard.error||"Dashboard could not load.")+'</div><button class="btn" data-action="refresh">Retry</button>';return;}
  var events=dashboard.events||[],foods=[],symptoms=[],bowel=[],other=[];
