@@ -162,12 +162,18 @@ function ingredientQuantity(item){if(!item||typeof item!=="object")return "";ret
 function foodCalories(e){var items=parseIngredients(e);var total=items.reduce(function(sum,item){var n=Number(item&&item.estimated_calories_kcal);return sum+(Number.isFinite(n)?n:0);},0);return total>0?Math.round(total):null;}
 function entryDetail(e){return [e.dose&&((e.dose+" "+(e.unit||"")).trim()),e.purpose,e.notes,e.intensity,e.consistency].filter(Boolean).join(" · ");}
 function foodStructuredHtml(e){
- var ingredients=parseIngredients(e), notes=e.notes||e.description_notes||"", calories=foodCalories(e);
- // If notes contain a raw JSON ingredient array, remove it from the visible notes.
- notes=String(notes).replace(/\\s*[·•]?\\s*\\[\\s*\\{\\s*["']name["'][\\s\\S]*$/,"").trim();
+ var ingredients=parseIngredients(e), notes=String(e.notes||e.description_notes||""), calories=foodCalories(e);
+ // Some food logs append the serialized ingredient array to the notes field.
+ var jsonStart=notes.search(/\\[\\s*\\{\\s*["']name["']\\s*:/);
+ if(jsonStart>=0){
+   var jsonText=notes.slice(jsonStart).replace(/\\s*[·•]\\s*$/,"").trim();
+   try{var parsed=JSON.parse(jsonText);if(Array.isArray(parsed)&&parsed.length&&!ingredients.length)ingredients=parsed;}catch(_){}
+   notes=notes.slice(0,jsonStart).replace(/\\s*[·•]\\s*$/,"").trim();
+ }
  var html="";
  if(e.meal_type)html+='<div class="mealLabel">'+esc(e.meal_type)+'</div>';
  if(notes)html+='<div class="foodNotes">'+esc(notes)+'</div>';
+ if(calories===null&&ingredients.length){var total=ingredients.reduce(function(sum,item){var n=Number(item&&item.estimated_calories_kcal);return sum+(Number.isFinite(n)?n:0);},0);if(total>0)calories=Math.round(total);}
  if(calories!==null)html+='<div class="calorieTag">~'+calories+' kcal · estimate</div>';
  if(ingredients.length){html+='<details class="ingredientDetails"><summary>Ingredients ('+ingredients.length+')</summary><ul class="ingredientList">';ingredients.forEach(function(item){var name=ingredientName(item);if(!name)return;var qty=ingredientQuantity(item);var kcal=Number(item&&item.estimated_calories_kcal);html+='<li>'+esc(name)+(qty?' — '+esc(qty):'')+(Number.isFinite(kcal)&&kcal>0?' <span>('+Math.round(kcal)+' kcal)</span>':'')+'</li>';});html+='</ul></details>';}
  return html;
