@@ -43,6 +43,10 @@ const GG_SCHEMA = {
     "urgency", "straining", "incomplete_emptying", "description",
     "source_message_id"
   ],
+  "Medication Log": [
+    "record_id", "taken_at", "local_date", "captured_at", "medication_name",
+    "dose", "unit", "purpose", "notes", "source_message_id"
+  ],
   "Analysis Log": [
     "analysis_id", "report_id", "created_at", "target_date", "hypothesis",
     "factor_type", "candidate_exposure", "supporting_evidence",
@@ -64,7 +68,8 @@ const GG_EVENT_SHEET = {
   symptom: "Symptom Log",
   sleep: "Sleep Log",
   exercise: "Exercise Log",
-  bowel: "Bowel Log"
+  bowel: "Bowel Log",
+  medication: "Medication Log"
 };
 
 function doGet(e) {
@@ -289,7 +294,7 @@ function ggLogEvent_(ss, body) {
   const headers = ggHeaders_(sheet);
   if (!headers.length) throw new Error('Tab "' + sheetName + '" has no header row.');
   const data = ggPayloadData_(body, headers);
-  const occurred = ggEventTime_(type, body.occurred_at || data.occurred_at || data.started_at || data.sleep_start);
+  const occurred = ggEventTime_(type, body.occurred_at || data.occurred_at || data.taken_at || data.started_at || data.sleep_start);
   const localDate = String(data.local_date || (occurred ? Utilities.formatDate(occurred, GG_TIMEZONE, "yyyy-MM-dd") : ggToday_()));
   const sourceId = String(body.idempotency_key || body.source_message_id || data.source_message_id || "").trim();
 
@@ -312,6 +317,7 @@ function ggLogEvent_(ss, body) {
   if (occurred && !record.occurred_at && (type === "food" || type === "symptom" || type === "bowel")) {
     record.occurred_at = occurred.toISOString();
   }
+  if (type === "medication" && !record.taken_at && occurred) record.taken_at = occurred.toISOString();
   if (type === "sleep" && !record.sleep_start && occurred) record.sleep_start = occurred.toISOString();
   if (type === "exercise" && !record.started_at && occurred) record.started_at = occurred.toISOString();
   if (sourceId) record.source_message_id = sourceId;
