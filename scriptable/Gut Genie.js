@@ -164,7 +164,7 @@ function entryDetail(e){return [e.dose&&((e.dose+" "+(e.unit||"")).trim()),e.pur
 function foodStructuredHtml(e){
  var ingredients=parseIngredients(e), notes=e.notes||e.description_notes||"", calories=foodCalories(e);
  // If notes contain a raw JSON ingredient array, remove it from the visible notes.
- notes=String(notes).replace(/\s*[·•]?\s*\[\s*\{\s*["']name["'][\s\S]*$/,"").trim();
+ notes=String(notes).replace(/\\s*[·•]?\\s*\\[\\s*\\{\\s*["']name["'][\\s\\S]*$/,"").trim();
  var html="";
  if(e.meal_type)html+='<div class="mealLabel">'+esc(e.meal_type)+'</div>';
  if(notes)html+='<div class="foodNotes">'+esc(notes)+'</div>';
