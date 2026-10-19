@@ -289,8 +289,13 @@ function ggLogEvent_(ss, body) {
   const type = String(body.event_type || "").toLowerCase();
   const sheetName = GG_EVENT_SHEET[type];
   if (!sheetName) throw new Error("event_type must be food, symptom, sleep, exercise, or bowel.");
-  const sheet = ss.getSheetByName(sheetName);
-  if (!sheet) throw new Error('Missing tab "' + sheetName + '". Run inspect-schema, then setup-schema if appropriate.');
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet && type === "medication") {
+    sheet = ss.insertSheet(sheetName);
+    sheet.getRange(1, 1, 1, GG_SCHEMA[sheetName].length).setValues([GG_SCHEMA[sheetName]]);
+    sheet.setFrozenRows(1);
+  }
+  if (!sheet) throw new Error('Missing tab "' + sheetName + '" . Run inspect-schema, then setup-schema if appropriate.');
   const headers = ggHeaders_(sheet);
   if (!headers.length) throw new Error('Tab "' + sheetName + '" has no header row.');
   const data = ggPayloadData_(body, headers);
