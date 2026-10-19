@@ -30,7 +30,7 @@ paths:
                   description: Date in YYYY-MM-DD format.
                 event_type:
                   type: string
-                  enum: [food, symptom, sleep, exercise, bowel]
+                  enum: [food, symptom, sleep, exercise, bowel, medication]
                 occurred_at:
                   type: string
                   description: ISO 8601 timestamp when known.
@@ -56,6 +56,16 @@ paths:
                   type: object
                   description: Event fields matching the selected event sheet columns. Supply these as explicit properties inside data, not as top-level request fields.
                   properties:
+                    medication_name:
+                      type: string
+                    dose:
+                      type: string
+                    unit:
+                      type: string
+                    purpose:
+                      type: string
+                    taken_at:
+                      type: string
                     meal_type:
                       type: string
                     description:
