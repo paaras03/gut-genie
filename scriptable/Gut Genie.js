@@ -171,8 +171,15 @@ render();
 </script></body></html>`;
 
 
-  try { await web.loadHTML(html); await web.present(); }
-  catch(error){const alert=new Alert();alert.title="Gut Genie startup error";alert.message=String(error&&error.message?error.message:error);alert.addAction("OK");await alert.present();}
+  try {
+    await web.loadHTML(html);
+    await web.present();
+  } catch (error) {
+    // Do not show an Alert here: Scriptable may run this script in a
+    // non-interactive execution context where Alerts are unsupported.
+    console.error("Gut Genie startup error: " + String(error && error.stack ? error.stack : error));
+    throw error;
+  }
 }
 await main();
 Script.complete();
