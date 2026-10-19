@@ -133,7 +133,7 @@ window.nativeDashboard=function(payload){if(payload.result)dashboard=payload.res
 window.nativeReport=function(payload){reportLoading=false;if(payload.result)dailyReport=payload.result;else dailyReport={success:false,error:payload.error,report:null};render();};
 window.nativeHistory=function(payload){if(payload.result)reports=payload.result;else reports={success:false,error:payload.error,events:[]};render();};
 window.nativePatterns=function(payload){if(payload.result)hypotheses=payload.result;else hypotheses={success:false,error:payload.error,hypotheses:[]};render();};
-render();window.addEventListener("load",function(){setTimeout(function(){nativeRequest("refresh",selectedDate);},250);});
+render();window.addEventListener("load",function(){\n  // Let Scriptable finish presenting the WebView before the first native bridge/API round-trip.\n  // The initial callback can otherwise race WebView startup and surface a generic “Script error”.\n  setTimeout(function(){nativeRequest("refresh",selectedDate);},800);\n});
 </script></body></html>`;
 
 
