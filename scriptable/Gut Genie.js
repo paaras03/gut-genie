@@ -164,11 +164,11 @@ function entryDetail(e){return [e.dose&&((e.dose+" "+(e.unit||"")).trim()),e.pur
 function foodStructuredHtml(e){
  var ingredients=parseIngredients(e), notes=String(e.notes||e.description_notes||""), calories=foodCalories(e);
  // Some food logs append the serialized ingredient array to the notes field.
- var jsonStart=notes.search(/\\[\\s*\\{\\s*["']name["']\\s*:/);
+ var jsonStart=notes.search(/\[\s*\{\s*["']name["']\s*:/);
  if(jsonStart>=0){
-   var jsonText=notes.slice(jsonStart).replace(/\\s*[·•]\\s*$/,"").trim();
+   var jsonText=notes.slice(jsonStart).replace(/\s*[·•]\s*$/,"").trim();
    try{var parsed=JSON.parse(jsonText);if(Array.isArray(parsed)&&parsed.length&&!ingredients.length)ingredients=parsed;}catch(_){}
-   notes=notes.slice(0,jsonStart).replace(/\\s*[·•]\\s*$/,"").trim();
+   notes=notes.slice(0,jsonStart).replace(/\s*[·•]\s*$/,"").trim();
  }
  var html="";
  if(e.meal_type)html+='<div class="mealLabel">'+esc(e.meal_type)+'</div>';
