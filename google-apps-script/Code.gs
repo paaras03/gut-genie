@@ -101,6 +101,8 @@ function doPost(e) {
         return ggLogEvent_(ss, body);
       case "update-event":
         return ggUpdateEvent_(ss, body);
+      case "save-report":
+        return ggSaveReport_(ss, body);
       case "reports":
         return ggReports_(ss, body);
       case "report":
@@ -374,6 +376,48 @@ function ggPayloadData_(body, headers) {
     if (!reserved[key] && headers.indexOf(key) >= 0) result[key] = body[key];
   });
   return result;
+}
+
+function ggSaveReport_(ss, body) {
+  const sheet = ss.getSheetByName("Daily Reports");
+  if (!sheet) throw new Error('Missing tab "Daily Reports". Run inspect-schema first.');
+  const headers = ggHeaders_(sheet);
+  if (!headers.length) throw new Error('Tab "Daily Reports" has no header row.');
+  const payload = body.data && typeof body.data === "object" && !Array.isArray(body.data)
+    ? body.data : ggPayloadData_(body, headers);
+  const localDate = String(payload.local_date || body.date || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(localDate)) throw new Error("local_date must use YYYY-MM-DD.");
+  const reportId = String(payload.report_id || ("REPORT-" + localDate + "-SUMMARY-V1"));
+  const existing = ggReadTable_(ss, "Daily Reports").filter(function(row) {
+    return String(row.report_id || "") === reportId;
+  });
+  if (existing.length) return ggJson_({success:true, report:existing[0], duplicate:true, message:"Report already exists; no duplicate row created."});
+  const row = {
+    report_id: reportId,
+    local_date: localDate,
+    generated_at: Utilities.formatDate(new Date(), GG_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss"),
+    version: payload.version || 1,
+    status: payload.status || "saved",
+    day_summary: payload.day_summary || "",
+    symptom_summary: payload.symptom_summary || "",
+    food_and_timing_summary: payload.food_and_timing_summary || "",
+    sleep_summary: payload.sleep_summary || "",
+    exercise_summary: payload.exercise_summary || "",
+    bowel_summary: payload.bowel_summary || "",
+    strongest_associations: payload.strongest_associations || "",
+    evidence_against: payload.evidence_against || "",
+    missing_data: payload.missing_data || "",
+    next_experiment: payload.next_experiment || "",
+    experiment_rationale: payload.experiment_rationale || "",
+    safety_note: payload.safety_note || ""
+  };
+  const values = headers.map(function(header) {
+    const value = row[header];
+    return value === undefined || value === null ? "" :
+      (typeof value === "object" ? JSON.stringify(value) : value);
+  });
+  sheet.appendRow(values);
+  return ggJson_({success:true, report:row, duplicate:false});
 }
 
 function ggReports_(ss, body) {
